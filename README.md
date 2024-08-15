@@ -17,7 +17,7 @@
 ## 🌟 `Bot Intro and Features`
 <p align="center">  
   <a href="https://youtube.com/@s4salmanyt">
-    <img alt="Xlicon" height="1000" width="1000" src="https://iili.io/dET3ukX.md.png">
+    <img alt="Xlicon" height="600" width="600" src="https://iili.io/dET3ukX.md.png">
     <h1 align="center">XLICON-V4</h1>
   </a>
 </p>

@@ -55,7 +55,7 @@ global.botscript = 'https://github.com/salmanytofficial/XLICON-V4-MD' //script l
 global.packname = "𝘼𝙃𝙃𝙈𝙄 𝙆𝙐𝙉"
 global.author = "MΛDΣ BY 𝙎𝘼𝙇𝙈𝘼𝙉 𝘼𝙃𝙈𝘼𝘿"
 global.creator = "923184070915@s.whatsapp.net"
-global.xprefix = ','
+global.xprefix = '.'
 global.premium = ["923184070915"] // Premium User
 
 //bot sett
@@ -63,7 +63,7 @@ global.typemenu = 'v12' // menu type 'v1' => 'v12'
 global.typereply = 'v4' // reply type 'v1' => 'v4'
 global.autoblocknumber = '212' //set autoblock country code
 global.antiforeignnumber = '91' //set anti foreign number country code
-global.antidelete = false //set anti foreign number country code
+
 
 global.listv = ['•','●','■','✿','▲','➩','➢','➣','➤','✦','✧','△','❀','○','□','♤','♡','◇','♧','々','〆']
 global.tempatDB = 'database.json'

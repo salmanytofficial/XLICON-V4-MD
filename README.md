@@ -26,8 +26,8 @@
 <p align="center">
 <a href="https://github.com/salmanytofficial"><img title="Author" src="https://img.shields.io/badge/CREATOR-SALMAN SER-black.svg?style=for-the-badge&logo=github"></a>
 
-### ℹ️ **About XLICON-V3**
-XLICON-V3 is a Cool Multi-Device WhatsApp bot developed by [Salman Ahamed](https://github.com/salmanytofficial). It offers a wide range of extraordinary features, making it an advanced and user-friendly bot for various purposes.
+### ℹ️ **About XLICON-V4**
+XLICON-V4 is a Cool Multi-Device WhatsApp bot developed by [Salman Ahamed](https://github.com/salmanytofficial). It offers a wide range of extraordinary features, making it an advanced and user-friendly bot for various purposes.
 
 <p align="center"><img src="https://profile-counter.glitch.me/{XLICON-V4}/count.svg" alt="SALMAN AHMAD :: Visitor's Count" /></p>
 
@@ -110,7 +110,7 @@ Click On The Link To Donate ME...
 
 2. Now Deploy
     <br>
-<a href='https://xlcon-v3-deloy.vercel.app/' target="_blank"><img alt='DEPLOY' src='https://img.shields.io/badge/-DEPLOY-black?style=for-the-badge&logo=heroku&logoColor=white'/></a>
+<a href='https://dashbord.heroku.com/' target="_blank"><img alt='DEPLOY' src='https://img.shields.io/badge/-DEPLOY-black?style=for-the-badge&logo=heroku&logoColor=white'/></a>
 
 #### DEPLOY TO REPLIT
 
@@ -259,14 +259,15 @@ Misusing the bot may result in a ban from WhatsApp. Use at your own risk.
 * [FFmpeg](https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2020-12-08-13-03/ffmpeg-n4.3.1-26-gca55240b8c-win64-gpl-4.3.zip)
 * [Libwebp](https://developers.google.com/speed/webp/download)
 * Any text editor
+  
 ## `Clone Repo & Installation dependencies`
 ```bash
 git clone https://github.com/<your gitHub Username>/XLICON-V4-MD.git
 cd XLICON-V4-MD
-
 npm start
 ```
-## `For Termux/Ssh/Ubuntu`
+
+## `For Termux`
 ```bash
 apt update
 apt upgrade
@@ -280,9 +281,54 @@ pkg install wget
 pkg install imagemagick -y
 git clone https://github.com/<your gitHub Username>/XLICON-V4-MD
 cd XLICON-V4-MD
-yarn install
+npm install
 npm start
 ```
+
+## `For 24/7 Activation Pm2 (Termux)`
+```bash
+npm i -g pm2 && pm2 start index.js && pm2 save && pm2 logs
+```
+
+## `For 24/7 Activation Re-Execution Pm2 (Termux)`
+```bash
+npm i -g pm2 && pm2 start index.js -f && pm2 save && pm2 logs
+```
+
+## `For Ssh/Ubuntu/Linux`
+```bash
+sudo apt-get update
+sudo apt-get upgrade -y
+sudo apt-get install -y bash
+sudo apt-get install -y libwebp
+sudo apt-get install -y git
+sudo apt-get install -y nodejs
+sudo apt-get install -y ffmpeg
+sudo apt-get install -y wget
+sudo apt-get install -y imagemagick
+git clone https://github.com/<your-gitHub-Username>/XLICON-V4-MD
+cd XLICON-V4-MD
+npm install
+npm start
+```
+
+## `For Github Codespaces`
+```bash
+sudo apt-get update
+sudo apt-get upgrade -y
+sudo apt-get install -y bash
+sudo apt-get install -y libwebp
+sudo apt-get install -y git
+sudo apt-get install -y nodejs
+sudo apt-get install -y ffmpeg
+sudo apt-get install -y wget
+sudo apt-get install -y imagemagick
+git clone https://github.com/<your-gitHub-Username>/XLICON-V4-MD
+cd XLICON-V4-MD
+npm install
+npm start
+```
+
 ## `For VPS`
 ```bash
 apt install nodejs 
@@ -294,10 +340,6 @@ apt install bash
 git clone https://github.com/<your gitHub Username>/XLICON-V4-MD
 cd XLICON-V4-MD
 npm start
-```
-## `For 24/7 Activation (Termux)`
-```bash
-npm i -g pm2 && pm2 start index.js && pm2 save && pm2 logs
 ```
 
 ## `Reminder`

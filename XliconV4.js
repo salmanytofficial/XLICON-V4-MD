@@ -283,7 +283,7 @@ module.exports = XliconBotInc = async (XliconBotInc, m, chatUpdate, store) => {
                   anticontact: false,
                   antilink: false,
                   antipromotion: false,
-                  antidelete: true
+                  antidelete: false
 				}
 			}
 		    let setting = global.db.settings[botNumber]

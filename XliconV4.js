@@ -38,6 +38,7 @@
 
 process.on('unhandledRejection', console.error)
 process.on('uncaughtException', console.error)
+process.setMaxListeners(200);
 require('./settings');
 const fs = require('fs');
 const os = require('os');
@@ -241,9 +242,9 @@ module.exports = XliconBotInc = async (XliconBotInc, m, chatUpdate, store) => {
 			if (typeof group !== 'object') global.db.groups[m.chat] = {}
 			if (group) {
 				if (!('ntnsfw' in group)) group.ntnsfw = false
-				  if (!('welcome' in group)) group.welcome = false
+				          if (!('welcome' in group)) group.welcome = false
                   if (!('setinfo' in group)) group.setinfo = false
-				  if (!('badword' in group)) group.badword = false
+				          if (!('badword' in group)) group.badword = false
                   if (!('antiforeignnum' in group)) group.antiforeignnum = false
                   if (!('antibot' in group)) group.antibot = false
                   if (!('antiviewonce' in group)) group.antiviewonce = false
@@ -1747,7 +1748,7 @@ break
 			case 'rentbot':
                 replygcxlicon(`Type ${prefix}owner and chat him`)
                 break
-			case "idgroup": case "idgc": case "groupid": {
+      case 'idgroup': case 'idgc': case 'groupid': {
 if (!XliconTheCreator) return XliconStickOwner()
 let getGroups = await XliconBotInc.groupFetchAllParticipating()
 let groups = Object.entries(getGroups).slice(0).map((entry) => entry[1])
@@ -2049,6 +2050,7 @@ ${json.purport}`
   }
 }
 break
+
 			case 'quran': {
     try {
     // Extract the surah number or name from the command text.
@@ -2223,7 +2225,1093 @@ return await XliconBotInc.relayMessage(m.chat, msgs.message, {})
   }
   }
   break
-			case 'addlist':
+
+
+//------------------------------------------------------------------------------------------//
+//New Islam Cmds
+
+case 'namazchk': {
+  const prayers = ['Fajr', 'Zuhr', 'Asr', 'Maghrib', 'Isha'];
+
+  // Initialize tracking arrays if not already done
+  if (!XliconBotInc.askedPrayers) {
+      XliconBotInc.askedPrayers = [];
+  }
+  if (!XliconBotInc.prayerResults) {
+      XliconBotInc.prayerResults = [];
+  }
+
+  // Ask the first unasked prayer
+  let currentPrayerIndex = XliconBotInc.askedPrayers.length;
+  if (currentPrayerIndex < prayers.length) {
+      let currentPrayer = prayers[currentPrayerIndex];
+
+      let button = [{
+          name: 'single_select',
+          buttonParamsJson: {
+              title: `Did you pray ${currentPrayer}?`,
+              sections: [{
+                  title: `${currentPrayer.toUpperCase()} PRAYER`,
+                  rows: [
+                      { title: 'Yes', description: `I have prayed ${currentPrayer}`, id: `${prefix} yes ${currentPrayer.toLowerCase()}` },
+                      { title: 'No', description: `I haven't prayed ${currentPrayer}`, id: `${prefix} no ${currentPrayer.toLowerCase()}` },
+                  ]
+              }]
+          }
+      }];
+
+      await XliconBotInc.sendButtonMsg(m.chat, `*Did you pray ${currentPrayer}?*`, null, '*Please choose:*', null, button, m);
+  } else {
+      // Calculate the results
+      const totalYes = XliconBotInc.prayerResults.filter(result => result === 'yes').length;
+
+      let ratingMessage = '';
+      if (totalYes === 5) {
+          ratingMessage = "*🌟 Mash'Allah Bro, Keep It Up! 🌟*";
+      } else if (totalYes >= 3) {
+          ratingMessage = "*👍 Next Time Don't Miss Any Prayer!*";
+      } else {
+          ratingMessage = "*😔 Didn't Offer Any Prayer = You're Gay*";
+      }
+
+      // Construct the final message
+      let finalMessage = `
+*📊 Namaz Check Summary:*
+
+🕌 *Prayers Offered:* ${totalYes} out of 5
+
+${ratingMessage}
+
+*Thank you for answering all the prayers. May Allah bless you!* 🙏
+      `;
+
+      await XliconBotInc.sendText(m.chat, finalMessage);
+
+      // Reset tracking after all prayers have been asked
+      XliconBotInc.askedPrayers = [];
+      XliconBotInc.prayerResults = [];
+  }
+}
+break;
+
+case 'yes':
+case 'no': {
+  // Initialize tracking arrays if not already done
+  if (!XliconBotInc.askedPrayers) {
+      XliconBotInc.askedPrayers = [];
+  }
+  if (!XliconBotInc.prayerResults) {
+      XliconBotInc.prayerResults = [];
+  }
+
+  // Add the current prayer to the asked list and store the result
+  const prayers = ['Fajr', 'Zuhr', 'Asr', 'Maghrib', 'Isha'];
+  const currentPrayerIndex = XliconBotInc.askedPrayers.length;
+
+  if (command === 'yes') {
+      await XliconBotInc.sendText(m.chat, "*Mash'Allah 🌹*");
+      XliconBotInc.prayerResults.push('yes');
+  } else if (command === 'no') {
+      await XliconBotInc.sendText(m.chat, '*Shame On You 😔*');
+      XliconBotInc.prayerResults.push('no');
+  }
+
+  if (currentPrayerIndex < prayers.length) {
+      XliconBotInc.askedPrayers.push(prayers[currentPrayerIndex]);
+
+      // Move to the next prayer
+      let nextPrayerIndex = XliconBotInc.askedPrayers.length;
+      if (nextPrayerIndex < prayers.length) {
+          let nextPrayer = prayers[nextPrayerIndex];
+
+          let button = [{
+              name: 'single_select',
+              buttonParamsJson: {
+                  title: `Did you pray ${nextPrayer}?`,
+                  sections: [{
+                      title: `${nextPrayer.toUpperCase()} PRAYER`,
+                      rows: [
+                          { title: 'Yes', description: `I have prayed ${nextPrayer}`, id: `${prefix} yes ${nextPrayer.toLowerCase()}` },
+                          { title: 'No', description: `I haven't prayed ${nextPrayer}`, id: `${prefix} no ${nextPrayer.toLowerCase()}` },
+                      ]
+                  }]
+              }
+          }];
+
+          await XliconBotInc.sendButtonMsg(m.chat, `*Did you pray ${nextPrayer}?*`, null, '*Please choose:*', null, button, m);
+      } else {
+          // Calculate the results after the last prayer
+          const totalYes = XliconBotInc.prayerResults.filter(result => result === 'yes').length;
+
+          let ratingMessage = '';
+          if (totalYes === 5) {
+              ratingMessage = "*🌟 Mash'Allah Bro, Keep It Up! 🌟*";
+          } else if (totalYes >= 3) {
+              ratingMessage = "*👍 Next Time Don't Miss Any Prayer!*";
+          } else {
+              ratingMessage = "*😔 Didn't Offer Any Prayer = You're Gay*";
+          }
+
+          // Construct the final message
+          let finalMessage = `
+*📊 Namaz Check Summary:*
+
+🕌 *Prayers Offered:* ${totalYes} out of 5
+
+${ratingMessage}
+
+*Thank you for answering all the prayers. May Allah bless you!* 🙏
+          `;
+
+          await XliconBotInc.sendText(m.chat, finalMessage);
+
+          // Reset tracking after all prayers have been asked
+          XliconBotInc.askedPrayers = [];
+          XliconBotInc.prayerResults = [];
+      }
+  }
+}
+break;
+
+
+
+
+case 'kisahnabi': {
+  const prophets = [
+      'adam', 'ayyub', 'daud', 'dzulkifli', 'harun', 'hud', 'ibrahim', 'idris', 
+      'ilyas', 'ilyasa', 'isa', 'ishaq', 'ismail', 'luth', 'muhammad', 'musa', 
+      'nuh', 'sholeh', 'sulaiman', 'syuaib', 'yahya', 'yaqub', 'yunus', 'yusuf', 'zakariya'
+  ];
+
+  if (!text) {
+      let button = [{
+          name: 'single_select',
+          buttonParamsJson: {
+              title: `Please select a prophet to read the story:`,
+              sections: [{
+                  title: 'Prophets List',
+                  rows: prophets.map(nabi => ({
+                      title: nabi.charAt(0).toUpperCase() + nabi.slice(1), // Capitalize the first letter
+                      description: `Story of Prophet ${nabi.charAt(0).toUpperCase() + nabi.slice(1)}`,
+                      id: `${prefix}kisahnabi ${nabi}`
+                  }))
+              }]
+          }
+      }];
+
+      await XliconBotInc.sendButtonMsg(m.chat, '*Select a Prophet*', null, '*Choose one from the list below:*', null, button, m);
+      return;
+  }
+
+  // If user selects a prophet, fetch the story
+  try {
+      let nabiName = text.toLowerCase();
+      if (!prophets.includes(nabiName)) {
+          return XliconBotInc.sendText(m.chat, "*Not Found*\n*📮 Tips :* Please select a valid prophet from the list.");
+      }
+
+      let url = await fetch(`https://raw.githubusercontent.com/ZeroChanBot/Api-Freee/a9da6483809a1fbf164cdf1dfbfc6a17f2814577/data/kisahNabi/${nabiName}.json`);
+      let kisah = await url.json();
+
+      let hasil = `_*👳 Prophet :*_ ${kisah.name}\n`
+                + `_*📅 Date of Birth :*_ ${kisah.thn_kelahiran}\n`
+                + `_*📍 Place of Birth :*_ ${kisah.tmp}\n`
+                + `_*📊 Age :*_ ${kisah.usia}\n\n`
+                + `*— — — — — — — [ S T O R Y ] — — — — — — —*\n\n`
+                + `${kisah.description}`;
+
+      // Translate the story to English before sending
+      let translatedResult = await translate(hasil, { to: 'en' }).catch(_ => null);
+
+      if (translatedResult && translatedResult.text) {
+          await XliconBotInc.sendText(m.chat, `${translatedResult.text}`);
+      } else {
+          await XliconBotInc.sendText(m.chat, `${hasil}`);
+      }
+  } catch (error) {
+      await XliconBotInc.sendText(m.chat, "*Not Found*\n*📮 Tips :* Please try selecting a prophet from the list.");
+  }
+}
+break;
+
+
+
+case 'asmaulhusna': {
+  const contoh = `*Asmaul Husna*`;
+  const anjuran = `
+Dari Abu hurarirah radhiallahu anhu, Rasulullah Saw bersabda: "إِنَّ لِلَّهِ تَعَالَى تِسْعَةً وَتِسْعِينَ اسْمًا، مِائَةٌ إِلَّا وَاحِدًا، مَنْ أَحْصَاهَا دخل الجنة، وهو وتر يُحِبُّ الْوِتْرَ"
+Artinya: "Sesungguhnya Allah mempunyai sembilan puluh sembilan nama, alias seratus kurang satu. Barang siapa yang menghitung-hitungnya, niscaya masuk surga; Dia Witir dan menyukai yang witir".`;
+
+  const asmaulhusna = [
+      { index: 1, latin: "Ar Rahman", arabic: "الرَّحْمَنُ", translation_id: "مطلق صفت رحمت والا", translation_en: "The All Beneficent" },
+      { index: 2, latin: "Ar Rahiim", arabic: "الرَّحِيمُ", translation_id: "مطلق صفت شفقت والا", translation_en: "The Most Merciful" },
+      { index: 3, latin: "Al Malik", arabic: "الْمَلِكُ", translation_id: "مطلق صفت حکمرانی والا", translation_en: "The King, The Sovereign" },
+      { index: 4, latin: "Al Quddus", arabic: "الْقُدُّوسُ", translation_id: "مطلق صفت پاک", translation_en: "The Most Holy" },
+      { index: 5, latin: "As Salaam", arabic: "السَّلاَمُ", translation_id: "مطلق صفت سلامتی والا", translation_en: "Peace and Blessing" },
+      { index: 6, latin: "Al Mu’min", arabic: "الْمُؤْمِنُ", translation_id: "مطلق صفت امن دینے والا", translation_en: "The Guarantor" },
+      { index: 7, latin: "Al Muhaimin", arabic: "الْمُهَيْمِنُ", translation_id: "مطلق صفت نگہبان", translation_en: "The Guardian, the Preserver" },
+      { index: 8, latin: "Al ‘Aziiz", arabic: "الْعَزِيزُ", translation_id: "مطلق صفت عزت والا", translation_en: "The Almighty, the Self Sufficient" },
+      { index: 9, latin: "Al Jabbar", arabic: "الْجَبَّارُ", translation_id: "مطلق صفت طاقت والا", translation_en: "The Powerful, the Irresistible" },
+      { index: 10, latin: "Al Mutakabbir", arabic: "الْمُتَكَبِّرُ", translation_id: "مطلق صفت بڑائی والا", translation_en: "The Tremendous" },
+      { index: 11, latin: "Al Khaliq", arabic: "الْخَالِقُ", translation_id: "مطلق صفت خالق", translation_en: "The Creator" },
+      { index: 12, latin: "Al Baari’", arabic: "الْبَارِئُ", translation_id: "مطلق صفت بنانے والا", translation_en: "The Maker" },
+      { index: 13, latin: "Al Mushawwir", arabic: "الْمُصَوِّرُ", translation_id: "مطلق صفت شکل دینے والا", translation_en: "The Fashioner of Forms" },
+      { index: 14, latin: "Al Ghaffaar", arabic: "الْغَفَّارُ", translation_id: "مطلق صفت معاف کرنے والا", translation_en: "The Ever Forgiving" },
+      { index: 15, latin: "Al Qahhaar", arabic: "الْقَهَّارُ", translation_id: "مطلق صفت قاہر", translation_en: "The All Compelling Subduer" },
+      { index: 16, latin: "Al Wahhaab", arabic: "الْوَهَّابُ", translation_id: "مطلق صفت عطا کرنے والا", translation_en: "The Bestower" },
+      { index: 17, latin: "Ar Razzaaq", arabic: "الرَّزَّاقُ", translation_id: "مطلق صفت رزق دینے والا", translation_en: "The Ever Providing" },
+      { index: 18, latin: "Al Fattaah", arabic: "الْفَتَّاحُ", translation_id: "مطلق صفت رحمت کھولنے والا", translation_en: "The Opener, the Victory Giver" },
+      { index: 19, latin: "Al ‘Aliim", arabic: "اَلْعَلِيْمُ", translation_id: "مطلق صفت عالم", translation_en: "The All Knowing, the Omniscient" },
+      { index: 20, latin: "Al Qaabidh", arabic: "الْقَابِضُ", translation_id: "مطلق صفت تنگ کرنے والا", translation_en: "The Restrainer, the Straightener" },
+      { index: 21, latin: "Al Baasith", arabic: "الْبَاسِطُ", translation_id: "مطلق صفت پھیلانے والا", translation_en: "The Expander, the Munificent" },
+      { index: 22, latin: "Al Khaafidh", arabic: "الْخَافِضُ", translation_id: "مطلق صفت نیچا کرنے والا", translation_en: "The Abaser" },
+      { index: 23, latin: "Ar Raafi’", arabic: "الرَّافِعُ", translation_id: "مطلق صفت اونچا کرنے والا", translation_en: "The Exalter" },
+      { index: 24, latin: "Al Mu’izz", arabic: "الْمُعِزُّ", translation_id: "مطلق صفت عزت دینے والا", translation_en: "The Giver of Honor" },
+      { index: 25, latin: "Al Mudzil", arabic: "المُذِلُّ", translation_id: "مطلق صفت ذلت دینے والا", translation_en: "The Giver of Dishonor" },
+      { index: 26, latin: "Al Samii’", arabic: "السَّمِيعُ", translation_id: "مطلق صفت سننے والا", translation_en: "The All Hearing" },
+      { index: 27, latin: "Al Bashiir", arabic: "الْبَصِيرُ", translation_id: "مطلق صفت دیکھنے والا", translation_en: "The All Seeing" },
+      { index: 28, latin: "Al Hakam", arabic: "الْحَكَمُ", translation_id: "مطلق صفت فیصلے والا", translation_en: "The Judge, the Arbitrator" },
+      { index: 29, latin: "Al ‘Adl", arabic: "الْعَدْلُ", translation_id: "مطلق صفت عدل", translation_en: "The Utterly Just" },
+      { index: 30, latin: "Al Lathiif", arabic: "اللَّطِيفُ", translation_id: "مطلق صفت نرمی والا", translation_en: "The Subtly Kind" },
+      { index: 31, latin: "Al Khabiir", arabic: "الْخَبِيرُ", translation_id: "مطلق صفت رازوں کا جاننے والا", translation_en: "The All Aware" },
+      { index: 32, latin: "Al Haliim", arabic: "الْحَلِيمُ", translation_id: "مطلق صفت بردبار", translation_en: "The Forbearing, the Indulgent" },
+      { index: 33, latin: "Al ‘Azhiim", arabic: "الْعَظِيمُ", translation_id: "مطلق صفت عظیم", translation_en: "The Magnificent, the Infinite" },
+      { index: 34, latin: "Al Ghafuur", arabic: "الْغَفُورُ", translation_id: "مطلق صفت معاف کرنے والا", translation_en: "The All Forgiving" },
+      { index: 35, latin: "As Syakuur", arabic: "الشَّكُورُ", translation_id: "مطلق صفت شکرگزار", translation_en: "The Grateful" },
+      { index: 36, latin: "Al ‘Aliy", arabic: "الْعَلِيُّ", translation_id: "مطلق صفت اعلی", translation_en: "The Sublimely Exalted" },
+      { index: 37, latin: "Al Kabir", arabic: "الْكَبِيرُ", translation_id: "مطلق صفت بڑا", translation_en: "The All Great" },
+      { index: 38, latin: "Al Hafiz", arabic: "الْحَفِيظُ", translation_id: "مطلق صفت محفوظ کرنے والا", translation_en: "The Preserver" },
+      { index: 39, latin: "Al Muqit", arabic: "الْمُقيِت", translation_id: "مطلق صفت نگہبان", translation_en: "The Sustainer" },
+      { index: 40, latin: "Al Hasib", arabic: "الْحَسِيبُ", translation_id: "مطلق صفت حساب لینے والا", translation_en: "The Reckoner" },
+      { index: 41, latin: "Al Jaliil", arabic: "الْجَلِيلُ", translation_id: "مطلق صفت جلال والا", translation_en: "The Majestic" },
+      { index: 42, latin: "Al Kariim", arabic: "الْكَرِيمُ", translation_id: "مطلق صفت کرم والا", translation_en: "The Generous, the Esteemed" },
+      { index: 43, latin: "Al Raqiib", arabic: "الرَّقِيبُ", translation_id: "مطلق صفت نگران", translation_en: "The Watchful" },
+      { index: 44, latin: "Al Mujiib", arabic: "الْمُجِيبُ", translation_id: "مطلق صفت جواب دینے والا", translation_en: "The Responsive" },
+      { index: 45, latin: "Al Wasi’", arabic: "الْوَاسِعُ", translation_id: "مطلق صفت وسعت والا", translation_en: "The All-Encompassing" },
+      { index: 46, latin: "Al Haadi", arabic: "الْهَادِي", translation_id: "مطلق صفت ہدایت دینے والا", translation_en: "The Guide" },
+      { index: 47, latin: "Al Baadi’", arabic: "الْبَادِعُ", translation_id: "مطلق صفت سب سے پہلا", translation_en: "The Incomparable" },
+      { index: 48, latin: "Al Baaqi", arabic: "الْبَاقِي", translation_id: "مطلق صفت باقی", translation_en: "The Everlasting" },
+      { index: 49, latin: "Al Waarith", arabic: "الْوَارِثُ", translation_id: "مطلق صفت وارث", translation_en: "The Inheritor" },
+      { index: 50, latin: "Ar Rashid", arabic: "الرَّشِيدُ", translation_id: "مطلق صفت ہدایت دینے والا", translation_en: "The Righteous Teacher" },
+      { index: 51, latin: "As Sabur", arabic: "الصَّبُورُ", translation_id: "مطلق صفت صابر", translation_en: "The Patient" },
+      { index: 52, latin: "Al Mu’izz", arabic: "الْمُعِزُّ", translation_id: "مطلق صفت عزت دینے والا", translation_en: "The Giver of Honor" },
+      { index: 53, latin: "Al Muthir", arabic: "الْمُثِيرُ", translation_id: "مطلق صفت جوش دلانے والا", translation_en: "The Infuser of Enthusiasm" },
+      { index: 54, latin: "Al Mu’min", arabic: "الْمُؤْمِنُ", translation_id: "مطلق صفت ایمان دینے والا", translation_en: "The Giver of Faith" },
+      { index: 55, latin: "Al Qariib", arabic: "الْقَرِيبُ", translation_id: "مطلق صفت قریب", translation_en: "The Near" },
+      { index: 56, latin: "Al Mu’min", arabic: "الْمُؤْمِنُ", translation_id: "مطلق صفت ایمان دینے والا", translation_en: "The Giver of Faith" },
+      { index: 57, latin: "Al Qawiyy", arabic: "الْقَوِيُّ", translation_id: "مطلق صفت طاقتور", translation_en: "The All-Strong" },
+      { index: 58, latin: "Al Qadeer", arabic: "الْقَادِرُ", translation_id: "مطلق صفت قادر", translation_en: "The Omnipotent" },
+      { index: 59, latin: "Al Haqq", arabic: "الْحَقُّ", translation_id: "مطلق صفت حق", translation_en: "The Absolute Truth" },
+      { index: 60, latin: "Al Hakeem", arabic: "الْحَكِيمُ", translation_id: "مطلق صفت حکیم", translation_en: "The All Wise" },
+      { index: 61, latin: "Al Wahhab", arabic: "الْوَهَّابُ", translation_id: "مطلق صفت عطا کرنے والا", translation_en: "The Supreme Bestower" },
+      { index: 62, latin: "Al Jalil", arabic: "الْجَلِيلُ", translation_id: "مطلق صفت جلال والا", translation_en: "The Majestic" },
+      { index: 63, latin: "Al Karim", arabic: "الْكَرِيمُ", translation_id: "مطلق صفت کرم والا", translation_en: "The Generous" },
+      { index: 64, latin: "Al Khabeer", arabic: "الْخَبِيرُ", translation_id: "مطلق صفت باخبر", translation_en: "The All-Aware" },
+      { index: 65, latin: "Al Latif", arabic: "الْلَطِيفُ", translation_id: "مطلق صفت لطیف", translation_en: "The Subtle" },
+      { index: 66, latin: "Al Qabid", arabic: "الْقَابِضُ", translation_id: "مطلق صفت تنگ کرنے والا", translation_en: "The Withholder" },
+      { index: 67, latin: "Al Basit", arabic: "الْبَاسِطُ", translation_id: "مطلق صفت پھیلانے والا", translation_en: "The Extender" },
+      { index: 68, latin: "Al Khafid", arabic: "الْخَافِضُ", translation_id: "مطلق صفت کم کرنے والا", translation_en: "The Reducer" },
+      { index: 69, latin: "Ar Rafi", arabic: "الرَّافِعُ", translation_id: "مطلق صفت بلند کرنے والا", translation_en: "The Exalter" },
+      { index: 70, latin: "Al Mu’izz", arabic: "الْمُعِزُّ", translation_id: "مطلق صفت عزت دینے والا", translation_en: "The Honor Giver" },
+      { index: 71, latin: "Al Mudzil", arabic: "الْمُذِلُّ", translation_id: "مطلق صفت ذلت دینے والا", translation_en: "The Dishonor Giver" },
+      { index: 72, latin: "Al Sami", arabic: "الْسَمِيعُ", translation_id: "مطلق صفت سننے والا", translation_en: "The All-Hearing" },
+      { index: 73, latin: "Al Baseer", arabic: "الْبَصِيرُ", translation_id: "مطلق صفت دیکھنے والا", translation_en: "The All-Seeing" },
+      { index: 74, latin: "Al Hakam", arabic: "الْحَكَمُ", translation_id: "مطلق صفت حکمران", translation_en: "The Judge" },
+      { index: 75, latin: "Al Adl", arabic: "الْعَدْلُ", translation_id: "مطلق صفت انصاف کرنے والا", translation_en: "The Just" },
+      { index: 76, latin: "Al Latif", arabic: "الْلَطِيفُ", translation_id: "مطلق صفت نرمی والا", translation_en: "The Subtle" },
+      { index: 77, latin: "Al Khabir", arabic: "الْخَبِيرُ", translation_id: "مطلق صفت باخبر", translation_en: "The All-Aware" },
+      { index: 78, latin: "Al Halim", arabic: "الْحَلِيمُ", translation_id: "مطلق صفت بردبار", translation_en: "The Forbearing" },
+      { index: 79, latin: "Al Azim", arabic: "الْعَظِيمُ", translation_id: "مطلق صفت عظیم", translation_en: "The Magnificent" },
+      { index: 80, latin: "Al Ghafur", arabic: "الْغَفُورُ", translation_id: "مطلق صفت معاف کرنے والا", translation_en: "The Forgiving" },
+      { index: 81, latin: "Ash Shakur", arabic: "الْشَاكُورُ", translation_id: "مطلق صفت شکرگزار", translation_en: "The Appreciative" },
+      { index: 82, latin: "Al Ali", arabic: "الْعَلِيُّ", translation_id: "مطلق صفت اعلی", translation_en: "The Most High" },
+      { index: 83, latin: "Al Kabir", arabic: "الْكَبِيرُ", translation_id: "مطلق صفت بڑا", translation_en: "The Great" },
+      { index: 84, latin: "Al Hafiz", arabic: "الْحَفِيظُ", translation_id: "مطلق صفت محفوظ کرنے والا", translation_en: "The Preserver" },
+      { index: 85, latin: "Al Muqit", arabic: "الْمُقيِت", translation_id: "مطلق صفت خوراک دینے والا", translation_en: "The Sustainer" },
+      { index: 86, latin: "Al Hasib", arabic: "الْحَسِيبُ", translation_id: "مطلق صفت حساب لینے والا", translation_en: "The Reckoner" },
+      { index: 87, latin: "Al Jalil", arabic: "الْجَلِيلُ", translation_id: "مطلق صفت جلال والا", translation_en: "The Majestic" },
+      { index: 88, latin: "Al Karim", arabic: "الْكَرِيمُ", translation_id: "مطلق صفت کرم والا", translation_en: "The Generous" },
+      { index: 89, latin: "Al Raqib", arabic: "الرَّقِيبُ", translation_id: "مطلق صفت نگران", translation_en: "The Watchful" },
+      { index: 90, latin: "Al Mujib", arabic: "الْمُجِيبُ", translation_id: "مطلق صفت جواب دینے والا", translation_en: "The Responsive" },
+      { index: 91, latin: "Al Wasi'", arabic: "الْوَاسِعُ", translation_id: "مطلق صفت وسعت والا", translation_en: "The All-Encompassing" },
+      { index: 92, latin: "Al Haadi", arabic: "الْهَادِي", translation_id: "مطلق صفت ہدایت دینے والا", translation_en: "The Guide" },
+      { index: 93, latin: "Al Baadi'", arabic: "الْبَادِعُ", translation_id: "مطلق صفت سب سے پہلا", translation_en: "The Incomparable" },
+      { index: 94, latin: "Al Baqi", arabic: "الْبَاقِي", translation_id: "مطلق صفت باقی", translation_en: "The Everlasting" },
+      { index: 95, latin: "Al Warith", arabic: "الْوَارِثُ", translation_id: "مطلق صفت وارث", translation_en: "The Inheritor" },
+      { index: 96, latin: "Ar Rashid", arabic: "الرَّشِيدُ", translation_id: "مطلق صفت ہدایت دینے والا", translation_en: "The Righteous Teacher" },
+      { index: 97, latin: "As Sabur", arabic: "الصَّبُورُ", translation_id: "مطلق صفت صابر", translation_en: "The Patient" },
+      { index: 98, latin: "Al Mu’izz", arabic: "الْمُعِزُّ", translation_id: "مطلق صفت عزت دینے والا", translation_en: "The Giver of Honor" },
+      { index: 99, latin: "Al Muthir", arabic: "الْمُثِيرُ", translation_id: "مطلق صفت جوش دلانے والا", translation_en: "The Infuser of Enthusiasm" }
+  ];
+
+  const result = asmaulhusna.map(a => `\n${a.index}. ${a.latin}: ${a.translation_en} (${a.translation_id})\n   Arabic: ${a.arabic}\n   `).join("");
+  await XliconBotInc.sendText(m.chat, contoh + anjuran + result);
+}
+  break
+
+  case 'duas': {
+    if (!q) return replygcxlicon(`*Where is the text*\n\n*𝙴xample usage*\n*${prefix + command} <language id>*\n*${prefix + command} en*`);
+
+    // Read and parse the JSON file
+    let { result } = JSON.parse(fs.readFileSync('./lib/tahlil.json', 'utf-8'));
+
+    // Extract language code from command arguments
+    let lang = args[0] || 'en';
+
+    // Translate and map the result to create captions
+    let caption = await Promise.all(result.map(async (v, i) => {
+        try {
+            // Translate title and translation to the specified language
+            let translatedTitleResponse = await translate(v.title, { to: lang, autoCorrect: true }).catch(err => {
+                console.error(`Error translating title: ${err}`);
+                return { text: v.title };
+            });
+            let translatedTitle = translatedTitleResponse.text || v.title;
+
+            let translatedTranslationResponse = await translate(v.translation, { to: lang, autoCorrect: true }).catch(err => {
+                console.error(`Error translating translation: ${err}`);
+                return { text: v.translation };
+            });
+            let translatedTranslation = translatedTranslationResponse.text || v.translation;
+
+            return `
+*${i + 1}.* ${translatedTitle}
+
+❃ Arabic :
+${v.arabic}
+
+❃ Translate :
+${translatedTranslation}
+`.trim();
+        } catch (error) {
+            console.error(`Error translating text: ${error}`);
+            return `
+*${i + 1}.* ${v.title}
+
+❃ Arabic :
+${v.arabic}
+
+❃ Translate :
+${v.translation}
+`.trim();
+        }
+    })).then(captions => captions.join('\n\n'));
+
+    // Prepare and send the reply using your bot's method
+    let msgs = generateWAMessageFromContent(m.chat, {
+        viewOnceMessage: {
+            message: {
+                "messageContextInfo": {
+                    "deviceListMetadata": {},
+                    "deviceListMetadataVersion": 2
+                },
+                interactiveMessage: proto.Message.InteractiveMessage.create({
+                    body: proto.Message.InteractiveMessage.Body.create({
+                        text: caption
+                    }),
+                    footer: proto.Message.InteractiveMessage.Footer.create({
+                        text: botname
+                    }),
+                    header: proto.Message.InteractiveMessage.Header.create({
+                        hasMediaAttachment: false,
+                        ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg')}, { upload: XliconBotInc.waUploadToServer })
+                    }),
+                    nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                        buttons: [{
+                            "name": "quick_reply",
+                            "buttonParamsJson": `{\"display_text\":\"🌿\",\"id\":\""}`
+                        }],
+                    }), 
+                    contextInfo: {
+                        mentionedJid: [m.sender], 
+                        forwardingScore: 999,
+                        isForwarded: true,
+                        forwardedNewsletterMessageInfo: {
+                            newsletterJid: '120363232303807350@newsletter',
+                            newsletterName: ownername,
+                            serverMessageId: 143
+                        }
+                    }
+                })
+            }
+        }
+    }, { quoted: m });
+
+    return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+}
+break
+
+
+
+
+case 'namaz': {
+  const namazData = {
+      "result": [
+         {
+            "id": 1,
+            "name": "Opening Takbir",
+            "arabic": "اللَّهُ أَكْبَرُ كَبِيرًا وَالْحَمْدُ لِلَّهِ كَثِيرًا وَسُبْحَانَ اللَّهِ بُكْرَةً وَأَصِيلاً , إِنِّى وَجَّهْتُ وَجْهِىَ لِلَّذِى فَطَرَ السَّمَوَاتِ وَالأَرْضَ حَنِيفًا وَمَا أَنَا مِنَ الْمُشْرِكِينَ إِنَّ صَلاَتِى وَنُسُكِى وَمَحْيَاىَ وَمَمَاتِى لِلَّهِ رَبِّ الْعَالَمِينَ لاَ شَرِيكَ لَهُ وَبِذَلِكَ أُمِرْتُ وَأَنَا أَوَّلُ الْمُسْلِمِينَ",
+            "latin": "Alloohu akbar kabiirow wal hamdu lillaahi katsiiroo wasubhaanalloohi bukrotaw wa-ashiilaa, Innii wajjahtu wajhiya lilladzii fathoros samaawaati wal ardlo haniifaa wamaa ana minal musyrikiin. Inna sholaatii wa nusukii wamahyaa wa mamaatii lillaahi robbil 'aalamiin. Laa syariikalahu wa bidzaalika umirtu wa ana awwalul muslimiin",
+            "translation": "Allah is the Greatest, with the greatest greatness. All praise is due to Allah in abundance. Glory be to Allah in the morning and evening. Indeed, I direct my face to Allah who created the heavens and the earth, being upright and not of those who associate others with Him. Indeed, my prayer, my rites of worship, my life, and my death are for Allah, Lord of the Worlds. There is no partner for Him. And with this, I am commanded, and I am the first of the Muslims."
+        },
+        {
+            "id": 2,
+            "name": "Al-Fatihah",
+            "arabic": "بِسْمِ اللَّـهِ الرَّحْمَـٰنِ الرَّحِيمِ ﴿١﴾الْحَمْدُ لِلَّـهِ رَبِّ الْعَالَمِينَ ﴿٢﴾ الرَّحْمَـٰنِ الرَّحِيمِ ﴿٣﴾ مَالِكِ يَوْمِ الدِّينِ ﴿٤﴾ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ ﴿٥﴾ اهْدِنَاالصِّرَاطَ الْمُسْتَقِيمَ ﴿٦﴾ صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ ﴿٧",
+            "latin": "1. Bismillahirrahmanirrahim, 2. Alhamdulillahi rabbil alamin, 3. Arrahmaanirrahiim, 4. Maaliki yaumiddiin, 5. Iyyaka nabudu waiyyaaka nastaiin, 6. Ihdinashirratal mustaqim, 7. shiratalladzina an’amta alaihim ghairil maghduubi alaihim waladhaalin",
+            "translation": "1. In the name of Allah, the Most Gracious, the Most Merciful, 2. Praise be to Allah, Lord of the Worlds, 3. The Most Gracious, the Most Merciful, 4. Master of the Day of Judgment, 5. You alone we worship, and You alone we ask for help, 6. Guide us to the straight path, 7. The path of those who have received Your grace; not the path of those who have brought down wrath upon themselves, nor of those who have gone astray."
+        },
+        {
+            "id": 3,
+            "name": "Bowing (Ruku)",
+            "arabic": "(3x) سُبْحَانَ رَبِّيَ الْعَظِيْمِ وَبِحَمْدِهِ",
+            "latin": "Subhana Rabbiyal Adzimi Wabihamdih (3x)",
+            "translation": "Glory is to my Lord, the Most Great, and praise be to Him."
+        },
+        {
+            "id": 4,
+            "name": "Prostration (Sujud)",
+            "arabic": "(3x) سُبْحَانَ رَبِّىَ الْأَعْلَى وَبِحَمْدِهِ",
+            "latin": "Subhaana robbiyal a'la wabihamdih (3x)",
+            "translation": "Glory is to my Lord, the Most High, and praise be to Him."
+        },
+        {
+            "id": 5,
+            "name": "Sitting Between Two Prostrations",
+            "arabic": "رَبِّ اغْفِرْلِيْ وَارْحَمْنِيْ وَاجْبُرْنِيْ وَارْفَعْنِيْ وَارْزُقْنِيْ وَاهْدِنِيْ وَعَافِنِيْ وَاعْفُ عَنِّيْ",
+            "latin": "Rabbighfirli Warhamni Wajburnii Warfaknii Wazuqnii Wahdinii Wa'aafinii Wa'fuannii",
+            "translation": "O Allah, forgive my sins, have mercy on me, and remedy my shortcomings. Elevate my status, provide for me, guide me, grant me health, and pardon me."
+        },
+        {
+            "id": 6,
+            "name": "Sitting for the Initial Tashahhud",
+            "arabic": "اَلتَّحِيَّاتُ الْمُبَارَكَاتُ الصَّلَوَاتُ الطَّيِّبَاتُ ِللهِ، السَّلاَمُ عَلَيْكَ اَيُّهَا النَّبِيُّ وَرَحْمَةُ اللهِ وَبَرَكَاتُهُ، السَّلاَمُ عَلَيْنَا وَعَلَى عِبَادِاللهِ الصَّالِحِيْنَ، أَشْهَدُ اَنْ لآ إِلَهَ إِلاَّاللهُ وَاَشْهَدُ أَنَّ مُحَمَّدًا رَسُوْلُ اللهُ، اَللهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ",
+            "latin": "Attahiyyaatul mubaarokaatush sholawaatuth thoyyibaatu lillaah. Assalaamualaika ayyuhan nabiyyu wa rohmatulloohi wa barokaatuh. Assalaaamualainaa wa alaa ibaadillaahish shoolihiin. Asyhadu allaa ilaaha illallooh wa asyhadu anna Muhammadar rosuulullooh. Allahummasholli ala Sayyidina Muhammad",
+            "translation": "All greetings, blessings, prayers, and good things are for Allah. Peace be upon you, O Prophet, and the mercy and blessings of Allah. Peace be upon us and upon the righteous servants of Allah. I bear witness that there is no deity except Allah, and I bear witness that Muhammad is the Messenger of Allah. O Allah, send blessings upon our master Muhammad."
+        },
+        {
+            "id": 7,
+            "name": "Sitting for the Final Tashahhud",
+            "arabic": "اَلتَّحِيَّاتُ الْمُبَارَكَاتُ الصَّلَوَاتُ الطَّيِّبَاتُ ِللهِ، السَّلاَمُ عَلَيْكَ اَيُّهَا النَّبِيُّ وَرَحْمَةُ اللهِ وَبَرَكَاتُهُ، السَّلاَمُ عَلَيْنَا وَعَلَى عِبَادِاللهِ الصَّالِحِيْنَ، أَشْهَدُ اَنْ لآ إِلَهَ إِلاَّاللهُ وَاَشْهَدُ أَنَّ مُحَمَّدًا رَسُوْلُ اللهُ، اَللهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِ سَيِّدِنَا مُحَمَّدٍ، كَمَا صَلَّيْتَ عَلَى سَيِّدِنَا اِبْرَاهِيْمَ وَعَلَى آلِ سَيِّدِنَا اِبْرَاهِيْمَ وَبَارِكْ عَلَى سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِ سَيِّدِنَا مُحَمَّدٍ كَمَا بَرَكْتَ عَلَى سَيِّدِنَا اِبْرَاهِيْمَ وَعَلَى آلِ سَيِّدِنَا اِبْرَاهِيْمَ فِى الْعَالَمِيْنَ إِنَّكَ حَمِيْدٌ مَجِيْدٌ",
+            "latin": "Attahiyyaatul mubaarokaatush sholawaatuth thoyyibaatu lillaah. Assalaamualaika ayyuhan nabiyyu wa rohmatulloohi wa barokaatuh. Assalaaamualainaa wa alaa ibaadillaahish shoolihiin. Asyhadu allaa ilaaha illallooh wa asyhadu anna Muhammadar rosuulullooh. Allahumma Shalli Ala Sayyidina Muhammad Wa Ala Ali Sayyidina Muhammad. Kama Shollaita Ala Sayyidina Ibrahim wa alaa aali sayyidina Ibrahim, wabaarik ala Sayyidina Muhammad Wa Alaa Ali Sayyidina Muhammad, Kama barokta alaa Sayyidina Ibrahim wa alaa ali Sayyidina Ibrahim, Fil aalamiina innaka hamiidummajid",
+            "translation": "All greetings, blessings, and good prayers are for Allah. Peace be upon you, O Prophet, and the mercy of Allah and His blessings. Peace be upon us and upon the righteous servants of Allah. I bear witness that there is no deity except Allah, and I bear witness that Muhammad is the Messenger of Allah. O Allah, send blessings upon our master Muhammad and upon the family of our master Muhammad, as You sent blessings upon our master Ibrahim and upon the family of our master Ibrahim. And bless our master Muhammad and the family of our master Muhammad as You blessed our master Ibrahim and the family of our master Ibrahim throughout the worlds. Verily, You are Praiseworthy, Glorious."
+        },
+        {
+            "id": 8,
+            "name": "Salam",
+            "arabic": "اَلسَّلاَمُ عَلَيْكُمْ وَرَحْمَةُ اللهِ وَبَرَكَاتُهُ",
+            "latin": "Assalamualaikum Warohmatullahi Wabarokatuh",
+            "translation": "Peace be upon you and Allah's mercy and blessings."
+        }
+      ]
+  };
+
+  let captionText = namazData.result.map((v, i) => 
+      `*${i + 1}. ${v.name}*\n` +
+      `*Arabic:* ${v.arabic}\n` +
+      `*Latin:* ${v.latin}\n` +
+      `*Translation:* _${v.translation}_`
+  ).join('\n\n');
+
+  let introduction = `*「 Namaz Prayers 」*\n\n`;
+
+  // Create a message with design
+  let msgs = generateWAMessageFromContent(m.chat, {
+      viewOnceMessage: {
+          message: {
+              "messageContextInfo": {
+                  "deviceListMetadata": {},
+                  "deviceListMetadataVersion": 2
+              },
+              interactiveMessage: proto.Message.InteractiveMessage.create({
+                  body: proto.Message.InteractiveMessage.Body.create({
+                      text: `${introduction}${captionText}`
+                  }),
+                  footer: proto.Message.InteractiveMessage.Footer.create({
+                      text: botname
+                  }),
+                  header: proto.Message.InteractiveMessage.Header.create({
+                      hasMediaAttachment: false,
+                      ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg') }, { upload: XliconBotInc.waUploadToServer })
+                  }),
+                  nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                      buttons: [{
+                          "name": "quick_reply",
+                          "buttonParamsJson": `{\"display_text\":\"🌿\",\"id\":\"quick_reply_id\"}`
+                      }],
+                  }),
+                  contextInfo: {
+                      mentionedJid: [m.sender], 
+                      forwardingScore: 999,
+                      isForwarded: true,
+                      forwardedNewsletterMessageInfo: {
+                          newsletterJid: '120363232303807350@newsletter',
+                          newsletterName: ownername,
+                          serverMessageId: 143
+                      }
+                  }
+              })
+          }
+      }
+  }, { quoted: m });
+
+  // Send the message
+  return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+}
+break;
+
+
+case 'masnoonduas': {
+  // Read and parse the JSON file
+  let src = JSON.parse(fs.readFileSync('./lib/doaharian.json', 'utf-8'));
+
+  // Delay function to throttle requests
+  function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // Translate function with retry logic
+  async function translateText(text, targetLang) {
+      let retries = 5;
+      while (retries > 0) {
+          try {
+              await delay(500); // Delay between requests
+              let result = await translate(text, { to: targetLang });
+              return result.text;
+          } catch (error) {
+              console.error('Translation error:', error);
+              if (error.message.includes('TooManyRequestsError')) {
+                  await delay(10000); // Wait for 10 seconds before retrying
+              } else {
+                  return text; // Return original text if translation fails
+              }
+              retries -= 1;
+          }
+      }
+      return text; // Return original text if all retries fail
+  }
+
+  // Create the caption with translations
+  let caption = await Promise.all(src.map(async (v, i) => {
+      // Translate title and translation to English
+      let translatedTitle = await translateText(v.title, 'en');
+      let translatedTranslation = await translateText(v.translation, 'en');
+
+      return `
+*${i + 1}.* ${translatedTitle}
+
+❃ Latin :
+${v.latin}
+
+❃ Arabic :
+${v.arabic}
+
+❃ Translate :
+${translatedTranslation}
+`.trim();
+  }));
+
+  // Join all captions
+  let captionText = caption.join('\n\n');
+
+  // Create a message with design
+  let msgs = generateWAMessageFromContent(m.chat, {
+      viewOnceMessage: {
+          message: {
+              "messageContextInfo": {
+                  "deviceListMetadata": {},
+                  "deviceListMetadataVersion": 2
+              },
+              interactiveMessage: proto.Message.InteractiveMessage.create({
+                  body: proto.Message.InteractiveMessage.Body.create({
+                      text: captionText
+                  }),
+                  footer: proto.Message.InteractiveMessage.Footer.create({
+                      text: botname
+                  }),
+                  header: proto.Message.InteractiveMessage.Header.create({
+                      hasMediaAttachment: false,
+                      ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg')}, { upload: XliconBotInc.waUploadToServer })
+                  }),
+                  nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                      buttons: [{
+                          "name": "quick_reply",
+                          "buttonParamsJson": `{\"display_text\":\"🌿\",\"id\":\""}`
+                      }],
+                  }),
+                  contextInfo: {
+                      mentionedJid: [m.sender], 
+                      forwardingScore: 999,
+                      isForwarded: true,
+                      forwardedNewsletterMessageInfo: {
+                          newsletterJid: '120363232303807350@newsletter',
+                          newsletterName: ownername,
+                          serverMessageId: 143
+                      }
+                  }
+              })
+          }
+      }
+  }, { quoted: m });
+
+  // Send the message
+  return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+}
+break;
+
+
+
+case 'ayatalkursi': {
+  let caption = `
+*「 Ayat Kursi 」*
+اللَّهُ لَا إِلَهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ لَهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ مَنْ ذَا الَّذِي يَشْفَعُ عِنْدَهُ إِلَّا بِإِذْنِهِ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ وَلَا يُحِيطُونَ بِشَيْءٍ مِنْ عِلْمِهِ إِلَّا بِمَا شَاءَ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ وَلَا يَئُودُهُ حِفْظُهُمَا وَهُوَ الْعَلِيُّ الْعَظِيمُ
+“Alloohu laa ilaaha illaa huwal hayyul qoyyuum, laa ta’khudzuhuu sinatuw walaa naum. Lahuu maa fissamaawaati wa maa fil ardli man dzal ladzii yasyfa’u ‘indahuu illaa biidznih, ya’lamu maa baina aidiihim wamaa kholfahum wa laa yuhiithuuna bisyai’im min ‘ilmihii illaa bimaa syaa’ wasi’a kursiyyuhus samaawaati wal ardlo walaa ya’uuduhuu hifdhuhumaa wahuwal ‘aliyyul ‘adhiim.”
+
+ترجمہ:
+اللہ، کوئی معبود نہیں سوائے اس کے، جو زندہ ہے، دائمی اور مسلسل اپنے مخلوقات کی دیکھ بھال کرتا ہے؛ نہ اونگھتا ہے اور نہ ہی سوتا ہے۔ جو کچھ آسمانوں اور زمین میں ہے، وہ سب اللہ کا ہے۔ اللہ کے پاس شفاعت کرنے کا اختیار کسی کو بھی نہیں، سوائے اس کے کہ اللہ اجازت دے۔
+اللہ جانتا ہے جو کچھ ان کے سامنے ہے اور جو کچھ ان کے پیچھے ہے، اور وہ اللہ کے علم کے کسی بھی چیز کو نہیں جان سکتے سوائے اس کے جو اللہ چاہے۔ اللہ کی کرسی آسمانوں اور زمین کو محیط ہے، اور اللہ کو ان دونوں کو محفوظ رکھنے میں کوئی بوجھ نہیں محسوس ہوتا، اور اللہ بہت بلند اور عظیم ہے۔
+(QS. Al Baqarah: 255)
+  `.trim();
+  
+  await XliconBotInc.sendText(m.chat, caption);
+}
+break
+
+case 'niyatnamaz': {
+  if (!q) return m.reply(`Usage Example:\nniyatnamaz Subuh`);
+  
+  const niyatnamaz = [
+      {
+          index: 1,
+          solat: "subuh",
+          latin: "Ushalli fardhosh shubhi rok'ataini mustaqbilal qiblati adaa-an lillaahi ta'aala",
+          arabic: "اُصَلِّى فَرْضَ الصُّبْحِ رَكْعَتَيْنِ مُسْتَقْبِلَ الْقِبْلَةِ اَدَاءً ِللهِ تَعَالَى",
+          translation_en: "I intend to perform the Fardh of Subuh (Fajr) with two raka'ats facing the Qibla for the sake of Allah Ta'ala",
+      },
+      {
+          index: 2,
+          solat: "maghrib",
+          latin: "Ushalli fardhol maghribi tsalaata raka'aatim mustaqbilal qiblati adaa-an lillaahi ta'aala",
+          arabic: "اُصَلِّى فَرْضَ الْمَغْرِبِ ثَلاَثَ رَكَعَاتٍ مُسْتَقْبِلَ الْقِبْلَةِ اَدَاءً ِللهِ تَعَالَى",
+          translation_en: "I intend to perform the Fardh of Maghrib with three raka'ats facing the Qibla for the sake of Allah Ta'ala",
+      },
+      {
+          index: 3,
+          solat: "dzuhur",
+          latin: "Ushalli fardhodl dhuhri arba'a raka'aatim mustaqbilal qiblati adaa-an lillaahi ta'aala",
+          arabic: "اُصَلِّى فَرْضَ الظُّهْرِاَرْبَعَ رَكَعَاتٍ مُسْتَقْبِلَ الْقِبْلَةِ اَدَاءً ِللهِ تَعَالَى",
+          translation_en: "I intend to perform the Fardh of Dzuhur (Dhuhr) with four raka'ats facing the Qibla for the sake of Allah Ta'ala",
+      },
+      {
+          index: 4,
+          solat: "isha",
+          latin: "Ushalli fardhol 'isyaa-i arba'a raka'aatim mustaqbilal qiblati adaa-an lillaahi ta'aala",
+          arabic: "صَلِّى فَرْضَ الْعِشَاءِ اَرْبَعَ رَكَعَاتٍ مُسْتَقْبِلَ الْقِبْلَةِ اَدَاءً ِللهِ تَعَالَى",
+          translation_en: "I intend to perform the Fardh of Isha with four raka'ats facing the Qibla for the sake of Allah Ta'ala",
+      },
+      {
+          index: 5,
+          solat: "ashar",
+          latin: "Ushalli fardhol 'ashri arba'a raka'aatim mustaqbilal qiblati adaa-an lillaahi ta'aala",
+          arabic: "صَلِّى فَرْضَ الْعَصْرِاَرْبَعَ رَكَعَاتٍ مُسْتَقْبِلَ الْقِبْلَةِ اَدَاءً ِللهِ تَعَالَى",
+          translation_en: "I intend to perform the Fardh of Ashar (Asr) with four raka'ats facing the Qibla for the sake of Allah Ta'ala",
+      }
+  ];
+  
+  let text = q.toLowerCase() || '';
+  let data = niyatnamaz.find(v => v.solat === text);
+  
+  if (!data) {
+      return m.reply(`Command ${text} Not Found\n\nList of 5 Daily Prayers:\n• Subuh\n• Maghrib\n• Dzuhur\n• Isha\n• Ashar`);
+  }
+
+  const responseText = `
+_*Intention for the ${text} Prayer*_
+
+*Arabic:* ${data.arabic}
+
+*Latin:* ${data.latin}
+
+*Translation:* ${data.translation_en}`.trim();
+
+  // Prepare and send the reply using your bot's method
+  let msgs = generateWAMessageFromContent(m.chat, {
+      viewOnceMessage: {
+          message: {
+              "messageContextInfo": {
+                  "deviceListMetadata": {},
+                  "deviceListMetadataVersion": 2
+              },
+              interactiveMessage: proto.Message.InteractiveMessage.create({
+                  body: proto.Message.InteractiveMessage.Body.create({
+                      text: responseText
+                  }),
+                  footer: proto.Message.InteractiveMessage.Footer.create({
+                      text: botname
+                  }),
+                  header: proto.Message.InteractiveMessage.Header.create({
+                      hasMediaAttachment: false,
+                      ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg')}, { upload: XliconBotInc.waUploadToServer })
+                  }),
+                  nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                      buttons: [{
+                          "name": "quick_reply",
+                          "buttonParamsJson": `{\"display_text\":\"🌿\",\"id\":\""}`
+                      }],
+                  }), 
+                  contextInfo: {
+                      mentionedJid: [m.sender], 
+                      forwardingScore: 999,
+                      isForwarded: true,
+                      forwardedNewsletterMessageInfo: {
+                          newsletterJid: '120363232303807350@newsletter',
+                          newsletterName: ownername,
+                          serverMessageId: 143
+                      }
+                  }
+              })
+          }
+      }
+  }, { quoted: m });
+
+  return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+}
+break;
+
+
+case 'quotesislami': {
+  const islami = [
+      {
+          "id": "1",
+          "arabic": "مَنْ سَارَ عَلىَ الدَّرْبِ وَصَلَ",
+          "translation_en": "Whoever walks the path will reach (their goal)."
+      },
+      {
+          "id": "2",
+          "arabic": "مَنْ صَبَرَ ظَفِرَ",
+          "translation_en": "Whoever is patient will be successful."
+      },
+      {
+          "id": "3",
+          "arabic": "مَنْ جَدَّ وَجَـدَ",
+          "translation_en": "Whoever strives will achieve (success)."
+      },
+      {
+          "id": "4",
+          "arabic": "جَالِسْ أَهْلَ الصِّدْقِ وَالوَفَاءِ",
+          "translation_en": "Associate with those who are truthful and trustworthy."
+      },
+      {
+          "id": "5",
+          "arabic": "مَنْ قَلَّ صِدْقُهُ قَلَّ صَدِيْقُهُ",
+          "translation_en": "Whoever has little honesty will have few friends."
+      },
+      {
+          "id": "6",
+          "arabic": "مَوَدَّةُ الصَّدِيْقِ تَظْهَرُ وَقْتَ الضِّيْقِ",
+          "translation_en": "The affection of a friend shows in times of hardship."
+      },
+      {
+          "id": "7",
+          "arabic": "الصَّبْرُ يُعِيْنُ عَلَى كُلِّ عَمَلٍ",
+          "translation_en": "Patience helps with every task."
+      },
+      {
+          "id": "8",
+          "arabic": "وَمَا اللَّذَّةُ إِلاَّ بَعْدَ التَّعَبِ",
+          "translation_en": "There is no pleasure except after effort."
+      },
+      {
+          "id": "9",
+          "arabic": "جَرِّبْ وَلاَحِظْ تَكُنْ عَارِفًا",
+          "translation_en": "Try and observe, and you will gain knowledge."
+      },
+      {
+          "id": "10",
+          "arabic": "بَيْضَةُ اليَوْمِ خَيْرٌ مِنْ دَجَاجَةِ الغَدِ",
+          "translation_en": "Today's egg is better than tomorrow's chicken."
+      },
+      {
+          "id": "11",
+          "arabic": "أُطْلُبِ الْعِلْمَ مِنَ الْمَهْدِ إِلَى الَّلحْدِ",
+          "translation_en": "Seek knowledge from the cradle to the grave."
+      },
+      {
+          "id": "12",
+          "arabic": "الوَقْتُ أَثْمَنُ مِنَ الذَّهَبِ",
+          "translation_en": "Time is more valuable than gold."
+      },
+      {
+          "id": "13",
+          "arabic": "لاَ خَيْرَ فيِ لَذَّةٍ تَعْقِبُ نَدَماً",
+          "translation_en": "There is no good in pleasure that is followed by regret."
+      },
+      {
+          "id": "14",
+          "arabic": "أَخِي لَنْ تَنَالَ العِلْمَ إِلاَّ بِسِتَّةٍ سَأُنْبِيْكَ عَنْ تَفْصِيْلِهَا بِبَيَانٍ: ذَكَاءٌ وَحِرْصٌ وَاجْتِهَادٌ وَدِرْهَمٌ وَصُحْبَةُ أُسْتَاذٍ وَطُوْلُ زَمَانٍ",
+          "translation_en": "My brother, you will not attain knowledge except through six things: intelligence, eagerness, diligence, money, companionship with a teacher, and a long period of time."
+      },
+      {
+          "id": "15",
+          "arabic": "لاَ تَكُنْ رَطْباً فَتُعْصَرَ وَلاَ يَابِسًا فَتُكَسَّرَ",
+          "translation_en": "Do not be soft so that you are easily squeezed, nor hard so that you are easily broken."
+      },
+      {
+          "id": "16",
+          "arabic": "لِكُلِّ مَقَامٍ مَقَالٌ وَلِكُلِّ مَقَالٍ مَقَامٌ",
+          "translation_en": "Every place has its own speech, and every speech has its own place."
+      },
+      {
+          "id": "17",
+          "arabic": "خَيْرُ النَّاسِ أَحْسَنُهُمْ خُلُقاً وَأَنْفَعُهُمْ لِلنَّاسِ",
+          "translation_en": "The best of people are those who have the best manners and are the most beneficial to others."
+      },
+      {
+          "id": "18",
+          "arabic": "خَيْرُ جَلِيْسٍ في الزّمانِ كِتابُ",
+          "translation_en": "The best companion in any era is a book."
+      },
+      {
+          "id": "19",
+          "arabic": "مَنْ يَزْرَعْ يَحْصُدْ",
+          "translation_en": "Whoever plants will harvest."
+      },
+      {
+          "id": "20",
+          "arabic": "لَوْلاَ العِلْمُ لَكَانَ النَّاسُ كَالبَهَائِمِ",
+          "translation_en": "If not for knowledge, people would be like animals."
+      },
+      {
+          "id": "21",
+          "arabic": "سَلاَمَةُ الإِنْسَانِ فيِ حِفْظِ اللِّسَانِ",
+          "translation_en": "The safety of a person lies in the protection of their tongue (words)."
+      },
+      {
+          "id": "22",
+          "arabic": "الرِّفْقُ بِالضَّعِيْفِ مِنْ خُلُقِ الشَّرِيْفِ",
+          "translation_en": "Being gentle with the weak is a mark of noble character."
+      },
+      {
+          "id": "23",
+          "arabic": "وَعَامِلِ النَّاسَ بِمَا تُحِبُّ مِنْهُ دَائِماً",
+          "translation_en": "Treat people in a way that you would like to be treated."
+      },
+      {
+          "id": "24",
+          "arabic": "لَيْسَ الجَمَالُ بِأَثْوَابٍ تُزَيِّنُنُا إِنَّ الجَمَالَ جمَاَلُ العِلْمِ وَالأَدَبِ",
+          "translation_en": "Beauty is not in the clothes that adorn us, but in knowledge and manners."
+      },
+      {
+          "id": "25",
+          "arabic": "مَنْ أَعاَنَكَ عَلىَ الشَّرِّ ظَلَمَكَ",
+          "translation_en": "Whoever helps you in wrongdoing has wronged you."
+      }
+  ];
+  
+  // Select a random quote
+  const randomIndex = Math.floor(Math.random() * islami.length);
+  const randomQuote = islami[randomIndex];
+  const { arabic, translation_en } = randomQuote;
+
+  // Prepare the response text
+  const responseText = `${arabic}\n\n${translation_en}`;
+
+  // Prepare and send the reply using your bot's method
+  let msgs = generateWAMessageFromContent(m.chat, {
+      viewOnceMessage: {
+          message: {
+              "messageContextInfo": {
+                  "deviceListMetadata": {},
+                  "deviceListMetadataVersion": 2
+              },
+              interactiveMessage: proto.Message.InteractiveMessage.create({
+                  body: proto.Message.InteractiveMessage.Body.create({
+                      text: responseText
+                  }),
+                  footer: proto.Message.InteractiveMessage.Footer.create({
+                      text: botname
+                  }),
+                  header: proto.Message.InteractiveMessage.Header.create({
+                      hasMediaAttachment: false,
+                      ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg')}, { upload: XliconBotInc.waUploadToServer })
+                  }),
+                  nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                      buttons: [{
+                          "name": "quick_reply",
+                          "buttonParamsJson": `{\"display_text\":\"🌿\",\"id\":\""}`
+                      }],
+                  }), 
+                  contextInfo: {
+                      mentionedJid: [m.sender], 
+                      forwardingScore: 999,
+                      isForwarded: true,
+                      forwardedNewsletterMessageInfo: {
+                          newsletterJid: '120363232303807350@newsletter',
+                          newsletterName: ownername,
+                          serverMessageId: 143
+                      }
+                  }
+              })
+          }
+      }
+  }, { quoted: m });
+
+  return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+}
+break;
+
+case 'assalamualaikum': {
+  // Prepare the response text
+  const responseText = "Waalaikumsalam Wa Rehmatullahi Wa Barakatuhu";
+
+  // Prepare and send the reply using your bot's method
+  let msgs = generateWAMessageFromContent(m.chat, {
+      viewOnceMessage: {
+          message: {
+              "messageContextInfo": {
+                  "deviceListMetadata": {},
+                  "deviceListMetadataVersion": 2
+              },
+              interactiveMessage: proto.Message.InteractiveMessage.create({
+                  body: proto.Message.InteractiveMessage.Body.create({
+                      text: responseText
+                  }),
+                  footer: proto.Message.InteractiveMessage.Footer.create({
+                      text: botname
+                  }),
+                  header: proto.Message.InteractiveMessage.Header.create({
+                      hasMediaAttachment: false,
+                      ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg')}, { upload: XliconBotInc.waUploadToServer })
+                  }),
+                  nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                      buttons: [{
+                          "name": "quick_reply",
+                          "buttonParamsJson": `{\"display_text\":\"🌿\",\"id\":\""}`
+                      }],
+                  }), 
+                  contextInfo: {
+                      mentionedJid: [m.sender], 
+                      forwardingScore: 999,
+                      isForwarded: true,
+                      forwardedNewsletterMessageInfo: {
+                          newsletterJid: '120363232303807350@newsletter',
+                          newsletterName: ownername,
+                          serverMessageId: 143
+                      }
+                  }
+              })
+          }
+      }
+  }, { quoted: m });
+
+  return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+}
+break;
+
+case 'hadith': {
+  const apiUrl = 'https://api.lolhuman.xyz/api/hadits/detail/Sunan_Tirmidzi/1769?apikey=dcb4198762eb793a386a9c1c';
+
+  // Fetch data from the API
+  let response = await fetch(apiUrl);
+  let data = await response.json();
+
+  if (data.status !== 200) {
+      return await XliconBotInc.sendText(m.chat, "Failed to fetch Hadith details.");
+  }
+
+  // Extract relevant data
+  let hadith = data.result['1'];
+  let hadithText = hadith.nass;
+
+  // Delay function to throttle requests
+  function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // Translate function with retry logic
+  async function translateText(text, targetLang) {
+      let retries = 5;
+      while (retries > 0) {
+          try {
+              await delay(500); // Delay between requests
+              let result = await translate(text, { to: targetLang });
+              return result.text;
+          } catch (error) {
+              console.error('Translation error:', error);
+              if (error.message.includes('TooManyRequestsError')) {
+                  await delay(10000); // Wait for 10 seconds before retrying
+              } else {
+                  return text; // Return original text if translation fails
+              }
+              retries -= 1;
+          }
+      }
+      return text; // Return original text if all retries fail
+  }
+
+  // Translate hadith text to Urdu
+  let translatedHadith = await translateText(hadithText, 'ur');
+
+  // Create the caption with translations
+  let captionText = `
+*Hadith ID:* ${hadith.id}
+
+❃ Original Text :
+${hadithText}
+
+❃ Translated Text (Urdu) :
+${translatedHadith}
+`.trim();
+
+  // Create a message with design
+  let msgs = generateWAMessageFromContent(m.chat, {
+      viewOnceMessage: {
+          message: {
+              "messageContextInfo": {
+                  "deviceListMetadata": {},
+                  "deviceListMetadataVersion": 2
+              },
+              interactiveMessage: proto.Message.InteractiveMessage.create({
+                  body: proto.Message.InteractiveMessage.Body.create({
+                      text: captionText
+                  }),
+                  footer: proto.Message.InteractiveMessage.Footer.create({
+                      text: botname
+                  }),
+                  header: proto.Message.InteractiveMessage.Header.create({
+                      hasMediaAttachment: false,
+                      ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg')}, { upload: XliconBotInc.waUploadToServer })
+                  }),
+                  nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                      buttons: [{
+                          "name": "quick_reply",
+                          "buttonParamsJson": `{\"display_text\":\"🌿\",\"id\":\""}`
+                      }],
+                  }),
+                  contextInfo: {
+                      mentionedJid: [m.sender], 
+                      forwardingScore: 999,
+                      isForwarded: true,
+                      forwardedNewsletterMessageInfo: {
+                          newsletterJid: '120363232303807350@newsletter',
+                          newsletterName: ownername,
+                          serverMessageId: 143
+                      }
+                  }
+              })
+          }
+      }
+  }, { quoted: m });
+
+  // Send the message
+  return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+}
+break;
+
+
+ //------------------------------------------------------------------------------------------//
+
+  case 'addlist':
 if (!XliconTheCreator) return XliconStickOwner()
 if (!m.isGroup) return XliconStickGroup()
 var args1 = text.split("@")[0]
@@ -7599,49 +8687,69 @@ return await XliconBotInc.relayMessage(m.chat, msgs.message, {})
              
          }
      break
-			case 'fact': {
-    	const { data } = await axios.get(`https://nekos.life/api/v2/fact`)
-        let msgs = generateWAMessageFromContent(m.chat, {
-  viewOnceMessage: {
-    message: {
-        "messageContextInfo": {
-          "deviceListMetadata": {},
-          "deviceListMetadataVersion": 2
-        },
-        interactiveMessage: proto.Message.InteractiveMessage.create({
-          body: proto.Message.InteractiveMessage.Body.create({
-            text: `${themeemoji} *Fact:* ${data.fact}\n`
-          }),
-          footer: proto.Message.InteractiveMessage.Footer.create({
-            text: botname
-          }),
-          header: proto.Message.InteractiveMessage.Header.create({
-          hasMediaAttachment: false,
-          ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg')}, { upload: XliconBotInc.waUploadToServer })
-          }),
-          nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
-            buttons: [{
-            "name": "quick_reply",
-              "buttonParamsJson": `{\"display_text\":\"Next ➡️\",\"id\":\"${prefix+command}"}`
-            }],
-          }), 
-          contextInfo: {
-                  mentionedJid: [m.sender], 
-                  forwardingScore: 999,
-                  isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                  newsletterJid: '120363232303807350@newsletter',
-                  newsletterName: ownername,
-                  serverMessageId: 143
-                }
-                }
-       })
-    }
+     case 'yomamajoke': {
+      try {
+          // Fetch a yo mama joke from the API
+          let res = await fetch(`https://yomamaindra.onrender.com/jokes`);
+  
+          if (!res.ok) {
+              throw new Error(`API request failed with status ${res.status}`);
+          }
+  
+          let json = await res.json();
+  
+          // Extract the joke from the response
+          let yoMamaJoke = `${json.joke}`;
+  
+          // Create the message with design
+          let msgs = generateWAMessageFromContent(m.chat, {
+              viewOnceMessage: {
+                  message: {
+                      "messageContextInfo": {
+                          "deviceListMetadata": {},
+                          "deviceListMetadataVersion": 2
+                      },
+                      interactiveMessage: proto.Message.InteractiveMessage.create({
+                          body: proto.Message.InteractiveMessage.Body.create({
+                              text: yoMamaJoke
+                          }),
+                          footer: proto.Message.InteractiveMessage.Footer.create({
+                              text: botname
+                          }),
+                          header: proto.Message.InteractiveMessage.Header.create({
+                              hasMediaAttachment: false,
+                              ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg')}, { upload: XliconBotInc.waUploadToServer })
+                          }),
+                          nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                              buttons: [{
+                                  "name": "quick_reply",
+                                  "buttonParamsJson": `{\"display_text\":\"😂 Another Joke\",\"id\":\"${prefix}yomamajoke\"}`
+                              }],
+                          }),
+                          contextInfo: {
+                              mentionedJid: [m.sender],
+                              forwardingScore: 999,
+                              isForwarded: true,
+                              forwardedNewsletterMessageInfo: {
+                                  newsletterJid: '120363232303807350@newsletter',
+                                  newsletterName: ownername,
+                                  serverMessageId: 143
+                              }
+                          }
+                      })
+                  }
+              }
+          }, { quoted: m });
+  
+          // Send the message
+          return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+      } catch (error) {
+          console.error('API Fetch Error:', error);
+          return await XliconBotInc.sendText(m.chat, "An error occurred while fetching the joke. Please try again.");
+      }
   }
-}, { quoted: m })
-return await XliconBotInc.relayMessage(m.chat, msgs.message, {})
-    }
-    break
+  break;
+  
 			case 'stupidcheck':case 'uncleancheck':
 case 'hotcheck': case 'smartcheck':
 case 'greatcheck':
@@ -9043,14 +10151,254 @@ await XliconBotInc.relayMessage(m.chat, msgs.message, {})
         break
     
 
+        case 'yomamajoke': {
+          try {
+              // Fetch a yo mama joke from the API
+              let res = await fetch(`https://yomamaindra.onrender.com/jokes`);
+      
+              if (!res.ok) {
+                  throw new Error(`API request failed with status ${res.status}`);
+              }
+      
+              let json = await res.json();
+      
+              // Extract the joke from the response
+              let yoMamaJoke = `${json.joke}`;
+      
+              // Create the message with design
+              let msgs = generateWAMessageFromContent(m.chat, {
+                  viewOnceMessage: {
+                      message: {
+                          "messageContextInfo": {
+                              "deviceListMetadata": {},
+                              "deviceListMetadataVersion": 2
+                          },
+                          interactiveMessage: proto.Message.InteractiveMessage.create({
+                              body: proto.Message.InteractiveMessage.Body.create({
+                                  text: yoMamaJoke
+                              }),
+                              footer: proto.Message.InteractiveMessage.Footer.create({
+                                  text: botname
+                              }),
+                              header: proto.Message.InteractiveMessage.Header.create({
+                                  hasMediaAttachment: false,
+                                  ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg')}, { upload: XliconBotInc.waUploadToServer })
+                              }),
+                              nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                                  buttons: [{
+                                      "name": "quick_reply",
+                                      "buttonParamsJson": JSON.stringify({
+                                          "display_text": "😂 Another Joke",
+                                          "id": "another_joke",
+                                          "command": "yomamajoke"
+                                      })
+                                  }],
+                              }),
+                              contextInfo: {
+                                  mentionedJid: [m.sender], 
+                                  forwardingScore: 999,
+                                  isForwarded: true,
+                                  forwardedNewsletterMessageInfo: {
+                                      newsletterJid: '120363232303807350@newsletter',
+                                      newsletterName: ownername,
+                                      serverMessageId: 143
+                                  }
+                              }
+                          })
+                      }
+                  }
+              }, { quoted: m });
+      
+              // Send the message
+              return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+          } catch (error) {
+              console.error('API Fetch Error:', error);
+              return await XliconBotInc.sendText(m.chat, "An error occurred while fetching the joke. Please try again.");
+          }
+      }
+      break;
+      
+      case 'truecaller': {
+        let phoneNumber = '';
+        if (text) {
+          phoneNumber = text.replace(/[^0-9]/g, '');
+        } else if (m.quoted) {
+          phoneNumber = m.quoted.sender.replace(/[^0-9]/g, '');
+        } else if (m.mentionedJid && m.mentionedJid[0]) {
+          phoneNumber = m.mentionedJid[0].replace(/[^0-9]/g, '');
+        } else {
+          return await XliconBotInc.sendText(m.chat, "Please provide a number in international format without +, quote a user, or mention a user.");
+        }
+      
+        try {
+          const installationId = 'a1i0Z--jzbJC6kx-2_s3OMNW2X7O2Qe3ca-XwmHexijCBA6MNKAO2ciUw756zhWj';
+          const apiUrl = `https://truecaller-api.vercel.app/search?phone=${encodeURIComponent(phoneNumber)}&id=${installationId}`;
+      
+          let response = await fetch(apiUrl);
+          if (!response.ok) {
+            throw new Error(`API request failed with status ${response.status}`);
+          }
+      
+          let json = await response.json();
+          json.creator = 'GURU';
+      
+          let details = '';
+          for (let prop in json) {
+            if (prop === 'flagURL') continue;
+      
+            if (prop === 'addresses') {
+              details += `⚝ *${prop}:*\n`;
+              for (let addressProp in json[prop][0]) {
+                details += `  ⚝ *${addressProp}:* ${json[prop][0][addressProp]}\n`;
+              }
+            } else if (prop === 'countryDetails') {
+              details += `⚝ *${prop}:*\n`;
+              for (let countryProp in json[prop]) {
+                if (Array.isArray(json[prop][countryProp])) {
+                  details += `  ⚝ *${countryProp}:* ${json[prop][countryProp].join(', ')}\n`;
+                } else {
+                  details += `  ⚝ *${countryProp}:* ${json[prop][countryProp]}\n`;
+                }
+              }
+            } else {
+              if (prop !== 'flagURL') {
+                details += `⚝ *${prop}:* ${json[prop]}\n`;
+              }
+            }
+          }
+      
+          // Create the message with design
+          let msgs = generateWAMessageFromContent(m.chat, {
+            viewOnceMessage: {
+              message: {
+                "messageContextInfo": {
+                  "deviceListMetadata": {},
+                  "deviceListMetadataVersion": 2
+                },
+                interactiveMessage: proto.Message.InteractiveMessage.create({
+                  body: proto.Message.InteractiveMessage.Body.create({
+                    text: details
+                  }),
+                  footer: proto.Message.InteractiveMessage.Footer.create({
+                    text: botname
+                  }),
+                  header: proto.Message.InteractiveMessage.Header.create({
+                    hasMediaAttachment: false,
+                    ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg')}, { upload: XliconBotInc.waUploadToServer })
+                  }),
+                  nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                    buttons: [{
+                      "name": "quick_reply",
+                      "buttonParamsJson": `{\"display_text\":\"🔍 Search Another\",\"id\":\"search_another\"}`
+                    }],
+                  }),
+                  contextInfo: {
+                    mentionedJid: [m.sender],
+                    forwardingScore: 999,
+                    isForwarded: true,
+                    forwardedNewsletterMessageInfo: {
+                      newsletterJid: '120363232303807350@newsletter',
+                      newsletterName: ownername,
+                      serverMessageId: 143
+                    }
+                  }
+                })
+              }
+            }
+          }, { quoted: m });
+      
+          // Send the message
+          return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+        } catch (error) {
+          console.error('API Fetch Error:', error);
+          return await XliconBotInc.sendText(m.chat, "An error occurred while fetching the phone details. Please try again.");
+        }
+      }
+      break;
+      
+
+case 'alexa': {
+    // Get the user input text
+    let queryText = args.join(' ');
+
+    // Check if queryText is provided
+    if (!queryText) {
+        return await XliconBotInc.sendText(m.chat, "Please provide a message for Alexa.");
+    }
+
+    // Define the API URL with the user's query
+    const apiUrl = `https://ultimetron.guruapi.tech/rekha?prompt=${encodeURIComponent(queryText)}`;
+
+    // Fetch data from the API
+    let response;
+    try {
+        response = await fetch(apiUrl);
+        let data = await response.json();
+
+        if (!data.result || !data.result.response) {
+            return await XliconBotInc.sendText(m.chat, "Failed to get a response from Alexa. Please try again.");
+        }
+
+        let reply = data.result.response;
+
+        // Create the message with design
+        let msgs = generateWAMessageFromContent(m.chat, {
+            viewOnceMessage: {
+                message: {
+                    "messageContextInfo": {
+                        "deviceListMetadata": {},
+                        "deviceListMetadataVersion": 2
+                    },
+                    interactiveMessage: proto.Message.InteractiveMessage.create({
+                        body: proto.Message.InteractiveMessage.Body.create({
+                            text: reply
+                        }),
+                        footer: proto.Message.InteractiveMessage.Footer.create({
+                            text: botname
+                        }),
+                        header: proto.Message.InteractiveMessage.Header.create({
+                            hasMediaAttachment: false,
+                            ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg')}, { upload: XliconBotInc.waUploadToServer })
+                        }),
+                        nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                            buttons: [{
+                                "name": "quick_reply",
+                                "buttonParamsJson": `{\"display_text\":\"🔄 Try Again\",\"id\":\"retry_button\"}`
+                            }],
+                        }),
+                        contextInfo: {
+                            mentionedJid: [m.sender], 
+                            forwardingScore: 999,
+                            isForwarded: true,
+                            forwardedNewsletterMessageInfo: {
+                                newsletterJid: '120363232303807350@newsletter',
+                                newsletterName: ownername,
+                                serverMessageId: 143
+                            }
+                        }
+                    })
+                }
+            }
+        }, { quoted: m });
+
+        // Send the message
+        return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+    } catch (error) {
+        console.error('API Fetch Error:', error);
+        return await XliconBotInc.sendText(m.chat, "An error occurred while processing your request.");
+    }
+}
+break;
+
+
 //-------------------------------------------------------------------------------------------------//
 
 //Cricket Cmds
 
 //cricket
-case "matches":
-  case "match":
-  case "cricket":
+case 'matches':
+  case 'match':
+  case 'cricket':
     {
       let res = await fetchJson(`https://api-smd.onrender.com/api/match`);
       const matches = res.results;
@@ -9068,8 +10416,8 @@ case "matches":
     }
     break;
 
-  case "scores":
-  case "score":
+  case 'scores':
+  case 'score':
     {
       if (!args[0]) {
         return replygcXlicon(
@@ -10095,6 +11443,139 @@ XliconBotInc.sendImageAsSticker(m.chat, data.url, m, { packname: global.packname
 })
 }
 break
+
+//------------------------------------------------------------------------------------------------//
+//Anime Cmds
+case 'anime': {
+  // Get the anime name from the user's input
+  let queryText = args.join(' ');
+
+  // Check if queryText is provided
+  if (!queryText) {
+      return await XliconBotInc.sendText(m.chat, "Please provide the name of the anime.");
+  }
+
+  // Define the API URL with the user's query
+  const apiUrl = `https://api.lolhuman.xyz/api/anime?apikey=dcb4198762eb793a386a9c1c&query=${encodeURIComponent(queryText)}`;
+
+  // Fetch data from the API
+  let response;
+  try {
+      response = await fetch(apiUrl);
+      let data = await response.json();
+
+      if (data.status !== 200 || !data.result || data.result.length === 0) {
+          return await XliconBotInc.sendText(m.chat, "Failed to fetch anime details. Please check the query and try again.");
+      }
+
+      let anime = data.result[0];
+
+      // Extract relevant data with safety checks
+      let title = anime.title?.english || anime.title?.romaji || anime.title?.native || 'Unknown Title';
+      let description = anime.description || 'No description available.';
+      let coverImage = anime.coverImage?.large || 'https://via.placeholder.com/500';
+      let genres = anime.genres?.join(', ') || 'Unknown';
+      let status = anime.status || 'Unknown';
+      let episodes = anime.episodes || 'Unknown';
+      let duration = anime.duration || 'Unknown';
+      let startDate = anime.startDate ? `${anime.startDate.year}-${anime.startDate.month}-${anime.startDate.day}` : 'N/A';
+      let endDate = anime.endDate ? `${anime.endDate.year}-${anime.endDate.month}-${anime.endDate.day}` : 'N/A';
+
+      // Delay function to throttle requests
+      function delay(ms) {
+          return new Promise(resolve => setTimeout(resolve, ms));
+      }
+
+      // Translate function with retry logic
+      async function translateText(text, targetLang) {
+          let retries = 5;
+          while (retries > 0) {
+              try {
+                  await delay(500); // Delay between requests
+                  let result = await translate(text, { to: targetLang });
+                  return result.text;
+              } catch (error) {
+                  console.error('Translation error:', error);
+                  if (error.message.includes('TooManyRequestsError')) {
+                      await delay(10000); // Wait for 10 seconds before retrying
+                  } else {
+                      return text; // Return original text if translation fails
+                  }
+                  retries -= 1;
+              }
+          }
+          return text; // Return original text if all retries fail
+      }
+
+      // Translate description to Urdu
+      let translatedDescription = await translateText(description, 'ur');
+
+      // Create the caption with translations
+      let captionText = `
+*Title:* ${title}
+
+❃ Genres: ${genres}
+❃ Status: ${status}
+❃ Episodes: ${episodes}
+❃ Duration: ${duration} minutes per episode
+❃ Start Date: ${startDate}
+❃ End Date: ${endDate}
+
+*Description:* ${translatedDescription}
+`.trim();
+
+      // Create a message with design
+      let msgs = generateWAMessageFromContent(m.chat, {
+          viewOnceMessage: {
+              message: {
+                  "messageContextInfo": {
+                      "deviceListMetadata": {},
+                      "deviceListMetadataVersion": 2
+                  },
+                  interactiveMessage: proto.Message.InteractiveMessage.create({
+                      body: proto.Message.InteractiveMessage.Body.create({
+                          text: captionText
+                      }),
+                      footer: proto.Message.InteractiveMessage.Footer.create({
+                          text: botname
+                      }),
+                      header: proto.Message.InteractiveMessage.Header.create({
+                          hasMediaAttachment: false,
+                          ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg')}, { upload: XliconBotInc.waUploadToServer })
+                      }),
+                      nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                          buttons: [{
+                              "name": "quick_reply",
+                              "buttonParamsJson": `{\"display_text\":\"🌟\",\"id\":\""}`
+                          }],
+                      }),
+                      contextInfo: {
+                          mentionedJid: [m.sender], 
+                          forwardingScore: 999,
+                          isForwarded: true,
+                          forwardedNewsletterMessageInfo: {
+                              newsletterJid: '120363232303807350@newsletter',
+                              newsletterName: ownername,
+                              serverMessageId: 143
+                          }
+                      }
+                  })
+              }
+          }
+      }, { quoted: m });
+
+      // Send the message
+      return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+  } catch (error) {
+      console.error('API Fetch Error:', error);
+      return await XliconBotInc.sendText(m.chat, "An error occurred while fetching the anime details.");
+  }
+}
+break;
+
+
+//------------------------------------------------------------------------------------------------//
+
 			case 'wallhp': case 'akira': case 'akiyama': case 'ana': case 'art': case 'asuna': case 'ayuzawa': case 'boruto': case 'bts': case 'chiho': case 'chitoge': case 'cosplay': case 'cosplayloli': case 'cosplaysagiri': case 'cyber': case 'deidara': case 'doraemon': case 'elaina': case 'emilia': case 'erza': case 'exo':  case 'gamewallpaper': case 'gremory': case 'hacker': case 'hestia': case 'husbu': case 'inori': case 'islamic': case 'isuzu': case 'itachi': case 'itori': case 'jennie': case 'jiso': case 'justina': case 'kaga': case 'kagura': case 'kakasih': case 'kaori': case 'cartoon': case 'shortquote': case 'keneki': case 'kotori': case 'kurumi': case 'lisa': case 'loli2': case 'madara': case 'megumin': case 'mikasa': case 'mikey': case 'miku': case 'minato': case 'mountain': case 'naruto': case 'nekonime': case 'nezuko': case 'onepiece': case 'pentol': case 'pokemon': case 'programming':  case 'randomnime': case 'randomnime2': case 'rize': case 'rose': case 'sagiri': case 'sakura': case 'sasuke': case 'satanic': case 'shina': case 'shinka': case 'shinomiya': case 'shizuka': case 'shota': case 'space': case 'technology': case 'tejina': case 'toukachan': case 'tsunade': case 'waifu2': case 'yotsuba': case 'yuki': case 'yulibocil': case 'yumeko':{
 await XliconStickWait()
 let heyy
@@ -10720,19 +12201,19 @@ if (!text) return replygcxlicon('What location?')
             let wdata = await axios.get(
                 `https://api.openweathermap.org/data/2.5/weather?q=${text}&units=metric&appid=060a6bcfa19809c2cd4d97a212b19273&language=en`
             );
-            let textw = ""
-            textw += `*🗺️Weather of  ${text}*\n\n`
-            textw += `*Weather:-* ${wdata.data.weather[0].main}\n`
-            textw += `*Description:-* ${wdata.data.weather[0].description}\n`
-            textw += `*Avg Temp:-* ${wdata.data.main.temp}\n`
-            textw += `*Feels Like:-* ${wdata.data.main.feels_like}\n`
-            textw += `*Pressure:-* ${wdata.data.main.pressure}\n`
-            textw += `*Humidity:-* ${wdata.data.main.humidity}\n`
-            textw += `*Humidity:-* ${wdata.data.wind.speed}\n`
-            textw += `*Latitude:-* ${wdata.data.coord.lat}\n`
-            textw += `*Longitude:-* ${wdata.data.coord.lon}\n`
-            textw += `*Country:-* ${wdata.data.sys.country}\n`
-
+            let textw = "";
+            textw += `🌍 *Weather Report for ${text}*\n\n`;
+            textw += `🌤️ *Weather:* ${wdata.data.weather[0].main}\n`;
+            textw += `🌥️ *Description:* ${wdata.data.weather[0].description}\n`;
+            textw += `🌡️ *Avg Temp:* ${wdata.data.main.temp}°C\n`;
+            textw += `🤗 *Feels Like:* ${wdata.data.main.feels_like}°C\n`;
+            textw += `🌬️ *Pressure:* ${wdata.data.main.pressure} hPa\n`;
+            textw += `💧 *Humidity:* ${wdata.data.main.humidity}%\n`;
+            textw += `🍃 *Wind Speed:* ${wdata.data.wind.speed} m/s\n`;
+            textw += `🗺️ *Latitude:* ${wdata.data.coord.lat}\n`;
+            textw += `🗺️ *Longitude:* ${wdata.data.coord.lon}\n`;
+            textw += `🏳️ *Country:* ${wdata.data.sys.country}\n`;
+            
            XliconBotInc.sendMessage(
                 m.chat, {
                     text: textw,
@@ -12813,10 +14294,10 @@ await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, {
 })
 }
             break
-			case 'welcome':
+			      case 'welcome':
             case 'left': {
                if (!m.isGroup) return XliconStickGroup()
-if (!m.isAdmin && !XliconTheCreator) return XliconStickAdmin()
+               if (!m.isAdmin && !XliconTheCreator) return XliconStickAdmin()
                if (args[0] === 'on') {
                   db.groups[m.chat].welcome = true
                   replygcxlicon(`${command} is enabled`)
@@ -17019,7 +18500,6 @@ break
 │${setv} ${prefix}listmenu
 │${setv} ${prefix}religionmenu
 │${setv} ${prefix}animemenu
-│${setv} ${prefix}nsfwmenu
 │${setv} ${prefix}randomphotomenu
 │${setv} ${prefix}randomvideomenu
 │${setv} ${prefix}stickermenu
@@ -17365,10 +18845,6 @@ let msg = generateWAMessageFromContent(m.chat, {
 "title":"click to display",
 "description":"Displays The List Of Religion Features",
 "id":"${prefix}religionmenu"},
-{"header":"NSFW MENU",
-"title":"click to display",
-"description":"Displays The List Of NSFW Features",
-"id":"${prefix}nsfwmenu"},
 {"header":"ANIME MENU",
 "title":"click to display",
 "description":"Displays The List Of Anime Features",
@@ -17610,8 +19086,6 @@ let xmenu_oh = `
 │${setv} ${prefix}google 🅕
 │${setv} ${prefix}wikipedia 🅕
 │${setv} ${prefix}ytsearch 🅕
-│${setv} ${prefix}xnxxsearch 🅕
-│${setv} ${prefix}xvideosearch 🅕
 │${setv} ${prefix}apksearch 🅕
 │${setv} ${prefix}stickersearch 🅕
 │${setv} ${prefix}imdb 🅕
@@ -17621,8 +19095,6 @@ let xmenu_oh = `
 │${setv} ${prefix}pixiv 🅕
 ╰─┬────❍
 ╭─┴❍「 *Download* 」❍
-│${setv} ${prefix}xnxxdl 🅕
-│${setv} ${prefix}xvideodl 🅕
 │${setv} ${prefix}itunes 🅕
 │${setv} ${prefix}play 🅕
 │${setv} ${prefix}ytmp3 🅕
@@ -17824,6 +19296,7 @@ let xmenu_oh = `
 ╭─┴❍「 *Fun* 」❍
 │${setv} ${prefix}define 🅕
 │${setv} ${prefix}readmore 🅕
+│${setv} ${prefix}yomamajoke 🅕
 │${setv} ${prefix}fact 🅕
 │${setv} ${prefix}couple 🅕
 │${setv} ${prefix}soulmate 🅕
@@ -17897,6 +19370,7 @@ let xmenu_oh = `
 │${setv} ${prefix}telestick 🅕
 ╰─┬────❍
 ╭─┴❍「 *Anime* 」❍
+│${setv} ${prefix}searchmenu 🅕
 │${setv} ${prefix}stickhandhold 🅕
 │${setv} ${prefix}stickshinobu 🅕
 │${setv} ${prefix}stickcuddle 🅕
@@ -18031,23 +19505,11 @@ let xmenu_oh = `
 │${setv} ${prefix}avatar 🅕
 │${setv} ${prefix}shinobu 🅕
 │${setv} ${prefix}fox_girl 🅕
-│${setv} ${prefix}gecg 🅕
+│${setv} ${prefix}gecg 🅕 
 ╰─┬────❍
 ╭─┴❍「 *Anime NSFW* 」❍
-│${setv} ${prefix}hentai 🅕
-│${setv} ${prefix}gifblowjob 🅕
-│${setv} ${prefix}hentaivid 🅕
-│${setv} ${prefix}hneko 🅕
-│${setv} ${prefix}nwaifu 🅕
-│${setv} ${prefix}animespank 🅕
-│${setv} ${prefix}trap 🅕
-│${setv} ${prefix}blowjob 🅕
-│${setv} ${prefix}cuckold 🅕
-│${setv} ${prefix}milf 🅕
-│${setv} ${prefix}eba 🅕
-│${setv} ${prefix}pussy 🅕
-│${setv} ${prefix}yuri 🅕
-│${setv} ${prefix}zettai 🅕
+│ _Sorry USERS_
+│ NO NSFW MENU AVAILABLE
 ╰─┬────❍
 ╭─┴❍「 *Database* 」❍
 │${setv} ${prefix}setcmd 🅞
@@ -18070,6 +19532,16 @@ let xmenu_oh = `
 │${setv} ${prefix}bible 🅕
 │${setv} ${prefix}quran 🅕
 │${setv} ${prefix}gita 🅕
+│${setv} ${prefix}namazchk 🅕
+│${setv} ${prefix}kisahnabi 🅕
+│${setv} ${prefix}asmaulhusna 🅕
+│${setv} ${prefix}duas 🅕
+│${setv} ${prefix}namaz 🅕
+│${setv} ${prefix}masnoonduas 🅕
+│${setv} ${prefix}ayatalkursi 🅕
+│${setv} ${prefix}niyatnamaz 🅕
+│${setv} ${prefix}quotesislami 🅕
+│${setv} ${prefix}assalamualaikum 🅕
 ╰─┬────❍
 ╭─┴❍「 *Bug & War* 」❍
 │${setv} ${prefix}xandroid 🅞
@@ -18102,6 +19574,8 @@ let xmenu_oh = `
 │${setv} ${prefix}q 🅕
 │${setv} ${prefix}inspect 🅕
 │${setv} ${prefix}tagme 🅕
+│${setv} ${prefix}nowa 🅕
+│${setv} ${prefix}truecaller 🅕
 ╰──────❍`
 if (typemenu === 'v1') {
                     XliconBotInc.sendMessage(m.chat, {
@@ -19326,8 +20800,6 @@ let xmenu_oh = `
 │${setv} ${prefix}google 🅕
 │${setv} ${prefix}wikipedia 🅕
 │${setv} ${prefix}ytsearch 🅕
-│${setv} ${prefix}xnxxsearch 🅕
-│${setv} ${prefix}xvideosearch 🅕
 │${setv} ${prefix}apksearch 🅕
 │${setv} ${prefix}stickersearch 🅕
 │${setv} ${prefix}imdb 🅕
@@ -19697,8 +21169,6 @@ let xmenu_oh = `
 ├ *🅟 = For Premium User*
 ╰─┬────❍
 ╭─┴❍「 *Download* 」❍
-│${setv} ${prefix}xnxxdl 🅕
-│${setv} ${prefix}xvideodl 🅕
 │${setv} ${prefix}itunes 🅕
 │${setv} ${prefix}play 🅕
 │${setv} ${prefix}ytmp3 🅕
@@ -22780,6 +24250,7 @@ let xmenu_oh = `
 ╭─┴❍「 *Fun* 」❍
 │${setv} ${prefix}define 🅕
 │${setv} ${prefix}readmore 🅕
+│${setv} ${prefix}yomamajoke 🅕
 │${setv} ${prefix}fact 🅕
 │${setv} ${prefix}couple 🅕
 │${setv} ${prefix}soulmate 🅕
@@ -23573,6 +25044,7 @@ let xmenu_oh = `
 ├ *🅟 = For Premium User*
 ╰─┬────❍
 ╭─┴❍「 *Anime* 」❍
+│${setv} ${prefix}searchmenu 🅕
 │${setv} ${prefix}stickhandhold 🅕
 │${setv} ${prefix}stickshinobu 🅕
 │${setv} ${prefix}stickcuddle 🅕
@@ -24071,6 +25543,10 @@ let xmenu_oh = `
 ╰─┬────❍
 ╭─┴❍「 *Anime NSFW* 」❍
 │${setv} ${prefix}hentai 🅕
+│${setv} ${prefix}xnxxsearch 🅕
+│${setv} ${prefix}xvideosearch 🅕
+│${setv} ${prefix}xnxxdl 🅕
+│${setv} ${prefix}xvideodl 🅕
 │${setv} ${prefix}gifblowjob 🅕
 │${setv} ${prefix}hentaivid 🅕
 │${setv} ${prefix}hneko 🅕
@@ -25186,6 +26662,16 @@ let xmenu_oh = `
 │${setv} ${prefix}bible 🅕
 │${setv} ${prefix}quran 🅕
 │${setv} ${prefix}gita 🅕
+│${setv} ${prefix}namazchk 🅕
+│${setv} ${prefix}kisahnabi 🅕
+│${setv} ${prefix}asmaulhusna 🅕
+│${setv} ${prefix}duas 🅕
+│${setv} ${prefix}namaz 🅕
+│${setv} ${prefix}masnoonduas 🅕
+│${setv} ${prefix}ayatalkursi 🅕
+│${setv} ${prefix}niyatnamaz 🅕
+│${setv} ${prefix}quotesislami 🅕
+│${setv} ${prefix}assalamualaikum 🅕
 ╰──────❍`
 if (typemenu === 'v1') {
                     XliconBotInc.sendMessage(m.chat, {
@@ -25937,6 +27423,8 @@ let xmenu_oh = `
 │${setv} ${prefix}q 🅕
 │${setv} ${prefix}inspect 🅕
 │${setv} ${prefix}tagme 🅕
+│${setv} ${prefix}nowa 🅕
+│${setv} ${prefix}truecaller 🅕
 ╰──────❍`
 if (typemenu === 'v1') {
                     XliconBotInc.sendMessage(m.chat, {
@@ -26288,7 +27776,7 @@ await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, {
 break
 
  //bug cases
-case "xandroid": {
+case 'xandroid': {
   if (!XliconTheCreator) return
   if (!text) return replygcxlicon(`Use ${prefix+command} victim number|amount\nExample ${prefix+command} 91xxxxxxxxxx,5`) 
   let number = text.split(',')[0];
@@ -26320,7 +27808,7 @@ case "xandroid": {
   );
 }
 break;
-case "xios": {
+case 'xios': {
   if (!XliconTheCreator) return
   if (!text) return replygcxlicon(`Use ${prefix+command} victim number|amount\nExample ${prefix+command} 91xxxxxxxxxx,5`) 
   let number = text.split(',')[0];
@@ -26352,7 +27840,7 @@ case "xios": {
   );
 }
 break;
-case "xios2":
+case 'xios2':
   {
 	if (!XliconTheCreator) return
     if (!isBot) {
@@ -26372,7 +27860,7 @@ case "xios2":
     sendReaction('✅');
   }
   break;
-  case "xandroid2":
+  case 'xandroid2':
   {
 	if (!XliconTheCreator) return
     if (!isBot) {
@@ -26392,7 +27880,7 @@ case "xios2":
     sendReaction('✅');
   }
   break;
-  case "xgc":
+  case 'xgc':
   {
     if (!XliconTheCreator) return
     if (!text) {
@@ -26416,7 +27904,7 @@ case "xios2":
     }
   }
   break;
-  case "🙂":
+  case '🙂':
   {
 	if (!XliconTheCreator) return
     if (!isBot) {
@@ -26436,7 +27924,7 @@ case "xios2":
     sendReaction('✅');
   }
   break;
-  case "systemuicrash": {
+  case 'systemuicrash': {
   if (!XliconTheCreator) return
   if (!text) return replygcxlicon(`Use ${prefix+command} victim number|amount\nExample ${prefix+command} 91xxxxxxxxxx,5`) 
   let number = text.split(',')[0];
@@ -26468,7 +27956,7 @@ case "xios2":
   );
 }
 break;
-case "xsysui": {
+case 'xsysui': {
   if (!XliconTheCreator) return
   if (!text) return replygcxlicon(`Use ${prefix+command} victim number|amount\nExample ${prefix+command} 91xxxxxxxxxx,5`) 
   let number = text.split(',')[0];

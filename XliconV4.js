@@ -5950,7 +5950,7 @@ _*Here is the result of ${command}*_`
 return await XliconBotInc.relayMessage(m.chat, msgs.message, {})
                 }
 break
-case 'anime': {
+case 'searchanime': {
 if (!text) return replygcxlicon(`Which anime are you lookin for?`)
 const malScraper = require('mal-scraper')
 await XliconStickWait()
@@ -8687,6 +8687,7 @@ return await XliconBotInc.relayMessage(m.chat, msgs.message, {})
              
          }
      break
+				
      case 'yomamajoke': {
       try {
           // Fetch a yo mama joke from the API
@@ -8749,6 +8750,49 @@ return await XliconBotInc.relayMessage(m.chat, msgs.message, {})
       }
   }
   break;
+			case 'fact': {
+    	const { data } = await axios.get(`https://nekos.life/api/v2/fact`)
+        let msgs = generateWAMessageFromContent(m.chat, {
+  viewOnceMessage: {
+    message: {
+        "messageContextInfo": {
+          "deviceListMetadata": {},
+          "deviceListMetadataVersion": 2
+        },
+        interactiveMessage: proto.Message.InteractiveMessage.create({
+          body: proto.Message.InteractiveMessage.Body.create({
+            text: `${themeemoji} *Fact:* ${data.fact}\n`
+          }),
+          footer: proto.Message.InteractiveMessage.Footer.create({
+            text: botname
+          }),
+          header: proto.Message.InteractiveMessage.Header.create({
+          hasMediaAttachment: false,
+          ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg')}, { upload: XliconBotInc.waUploadToServer })
+          }),
+          nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+            buttons: [{
+            "name": "quick_reply",
+              "buttonParamsJson": `{\"display_text\":\"Next ➡️\",\"id\":\"${prefix+command}"}`
+            }],
+          }), 
+          contextInfo: {
+                  mentionedJid: [m.sender], 
+                  forwardingScore: 999,
+                  isForwarded: true,
+                forwardedNewsletterMessageInfo: {
+                  newsletterJid: '120363232303807350@newsletter',
+                  newsletterName: ownername,
+                  serverMessageId: 143
+                }
+                }
+       })
+    }
+  }
+}, { quoted: m })
+return await XliconBotInc.relayMessage(m.chat, msgs.message, {})
+    }
+    break	
   
 			case 'stupidcheck':case 'uncleancheck':
 case 'hotcheck': case 'smartcheck':

@@ -13,7 +13,7 @@
   "author": "Salman-Ahmad",
   "license": "MIT",
   "dependencies": {
-    "@whiskeysockets/baileys" : "^6.7.6",
+    "@whiskeysockets/baileys" : "^6.7.7",
     "@adiwajshing/keyed-db": "^0.2.4",
     "@bochilteam/scraper": "^4.2.4",
     "@develoka/angka-terbilang-js": "^1.4.2",

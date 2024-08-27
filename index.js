@@ -1,4 +1,4 @@
-require('./settings');
+require('./settings'); 
 const fs = require('fs');
 const pino = require('pino');
 const path = require('path');

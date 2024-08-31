@@ -23,7 +23,7 @@
 //*
 //*
 //base by DGXeon
-//re-upload? recode? copy code? give credit ya :)
+//re-upload? recode? copy code? give credit ya :) 
 //Instagram: ahmmikun
 //Telegram: t.me/ahmmitech
 //GitHub: @salmanytofficial

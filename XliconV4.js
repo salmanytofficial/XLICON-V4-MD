@@ -1761,42 +1761,47 @@ teks += `◉ Name : ${metadata2.subject}\n◉ ID : ${metadata2.id}\n◉ Member :
 replygcxlicon(teks + `To Use Please Type Command ${prefix}pushcontact idgroup|teks\n\nBefore using, please first copy the group id above`)
 }
 break
-			case 'repo': case 'repository': {
+case 'repo': case 'repository': {
   try {
     const [, username, repoName] = botscript.match(/github\.com\/([^/]+)\/([^/]+)/)
-    const response = await axios.get(`https://api.github.com/repos/salmanytofficial/XLICON-V4-MD`)
+    const response = await axios.get(`https://api.github.com/repos/${username}/${repoName}`)
     if (response.status === 200) {
       const repoData = response.data
       const formattedInfo = `
-${themeemoji} Repository Name: ${repoData.name}
-${themeemoji} Description: ${repoData.description}
-${themeemoji} Owner: ${repoData.owner.login}
-${themeemoji} Stars: ${repoData.stargazers_count}
-${themeemoji} Forks: ${repoData.forks_count}
-${themeemoji} URL: ${repoData.html_url}
-     
- `.trim()
-      await XliconBotInc.relayMessage(m.chat,  {
+✨ *Repository Name:* _${repoData.name}_
+📄 *Description:* _${repoData.description || 'No description provided.'}_
+👤 *Owner:* _${repoData.owner.login}_
+⭐ *Stars:* _${repoData.stargazers_count}_
+🍴 *Forks:* _${repoData.forks_count}_
+🔗 *URL:* ${repoData.html_url}
+      `.trim()
+      await XliconBotInc.relayMessage(m.chat, {
         requestPaymentMessage: {
           currencyCodeIso4217: 'USD',
           amount1000: 69000,
           requestFrom: m.sender,
           noteMessage: {
-          extendedTextMessage: {
-          text: formattedInfo,
-          contextInfo: {
-          externalAdReply: {
-          showAdAttribution: true
-          }}}}}}, { quoted: m })
+            extendedTextMessage: {
+              text: formattedInfo,
+              contextInfo: {
+                externalAdReply: {
+                  showAdAttribution: true
+                }
+              }
+            }
+          }
+        }
+      }, { quoted: m })
     } else {
       await replygcxlicon(`Unable to fetch repository information`)
     }
   } catch (error) {
     console.error(error)
-    await replygcxlicon(`Repository currently not available `)
+    await replygcxlicon(`Repository currently not available`)
   }
 }
 break
+
 			case 'myip':
             case 'ipbot':
                 if (!XliconTheCreator) return XliconStickOwner()
@@ -3307,6 +3312,765 @@ ${translatedHadith}
   return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
 }
 break;
+
+
+case 'prophetname': {
+  try {
+    // Define the API URL
+    const apiUrl = `${global.api}islamic/prophet-names?apikey=${global.id}`;
+
+    // Fetch data from the API
+    let response = await fetch(apiUrl);
+    let data = await response.json();
+
+    // Check if the request was successful
+    if (data.status !== 200) {
+      return await XliconBotInc.sendText(m.chat, "Failed to fetch Prophet's name.");
+    }
+
+    // Extract the Prophet's name
+    let prophetName = data.result.name;
+
+    // Create the message content
+    let captionText = `
+*Prophet's Name:*
+${prophetName}
+`.trim();
+
+    // Prepare and send the message
+    let msgs = generateWAMessageFromContent(m.chat, {
+      viewOnceMessage: {
+        message: {
+          messageContextInfo: {
+            deviceListMetadata: {},
+            deviceListMetadataVersion: 2
+          },
+          interactiveMessage: proto.Message.InteractiveMessage.create({
+            body: proto.Message.InteractiveMessage.Body.create({
+              text: captionText
+            }),
+            footer: proto.Message.InteractiveMessage.Footer.create({
+              text: botname
+            }),
+            header: proto.Message.InteractiveMessage.Header.create({
+              hasMediaAttachment: false,
+              ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg')}, { upload: XliconBotInc.waUploadToServer })
+            }),
+            nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+              buttons: [{
+                name: "quick_reply",
+                buttonParamsJson: "{\"display_text\":\"🌿\",\"id\":\"\"}"
+              }],
+            }),
+            contextInfo: {
+              mentionedJid: [m.sender], 
+              forwardingScore: 999,
+              isForwarded: true,
+              forwardedNewsletterMessageInfo: {
+                newsletterJid: '120363232303807350@newsletter',
+                newsletterName: ownername,
+                serverMessageId: 143
+              }
+            }
+          })
+        }
+      }
+    }, { quoted: m });
+
+    return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+  } catch (error) {
+    console.error('Error fetching Prophet\'s name:', error);
+    return await XliconBotInc.sendText(m.chat, "An error occurred while fetching the Prophet's name.");
+  }
+}
+break;
+
+case 'prayertime': {
+  // Extract the city name from the command input
+  let city = m.text.split(' ').slice(1).join(' ');
+  if (!city) {
+      return await XliconBotInc.sendText(m.chat, "Please provide a city name, e.g., `prayertime Lahore`.");
+  }
+
+  // Define the API URL with the city parameter using global variables
+  const apiUrl = `${global.api}islamic/prayer-times?city=${encodeURIComponent(city)}&apikey=${global.id}`;
+
+  try {
+      // Fetch data from the API
+      let response = await fetch(apiUrl);
+      let data = await response.json();
+
+      // Check if the request was successful
+      if (data.status !== 200 || data.result.status_valid !== 1) {
+          return await XliconBotInc.sendText(m.chat, "Failed to fetch prayer times. Please check the city name and try again.");
+      }
+
+      // Assign emojis for each prayer time
+      let fajrEmoji = '🌅';
+      let dhuhrEmoji = '🌞';
+      let asrEmoji = '🌤';
+      let maghribEmoji = '🌇';
+      let ishaEmoji = '🌙';
+
+      // Extract relevant data
+      let cityName = data.result.city;
+      let method = data.result.prayer_method_name;
+      let items = data.result.items[0];
+      let fajr = fajrEmoji + ' Fajr: ' + items.fajr;
+      let dhuhr = dhuhrEmoji + ' Dhuhr: ' + items.dhuhr;
+      let asr = asrEmoji + ' Asr: ' + items.asr;
+      let maghrib = maghribEmoji + ' Maghrib: ' + items.maghrib;
+      let isha = ishaEmoji + ' Isha: ' + items.isha;
+
+      // Create the message content
+      let captionText = `
+*Prayer Times for ${cityName}:*
+
+${fajr}
+${dhuhr}
+${asr}
+${maghrib}
+${isha}
+
+*Method:* ${method}
+`.trim();
+
+      // Prepare and send the message
+      let msgs = generateWAMessageFromContent(m.chat, {
+          viewOnceMessage: {
+              message: {
+                  "messageContextInfo": {
+                      "deviceListMetadata": {},
+                      "deviceListMetadataVersion": 2
+                  },
+                  interactiveMessage: proto.Message.InteractiveMessage.create({
+                      body: proto.Message.InteractiveMessage.Body.create({
+                          text: captionText
+                      }),
+                      footer: proto.Message.InteractiveMessage.Footer.create({
+                          text: botname
+                      }),
+                      header: proto.Message.InteractiveMessage.Header.create({
+                          hasMediaAttachment: false,
+                          ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg')}, { upload: XliconBotInc.waUploadToServer })
+                      }),
+                      nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                          buttons: [{
+                              "name": "quick_reply",
+                              "buttonParamsJson": `{\"display_text\":\"🌿\",\"id\":\""}`
+                          }],
+                      }),
+                      contextInfo: {
+                          mentionedJid: [m.sender], 
+                          forwardingScore: 999,
+                          isForwarded: true,
+                          forwardedNewsletterMessageInfo: {
+                              newsletterJid: '120363232303807350@newsletter',
+                              newsletterName: ownername,
+                              serverMessageId: 143
+                          }
+                      }
+                  })
+              }
+          }
+      }, { quoted: m });
+
+      return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+  } catch (error) {
+      console.error('Error fetching prayer times:', error);
+      return await XliconBotInc.sendText(m.chat, "An error occurred while fetching the prayer times.");
+  }
+}
+break;
+
+case 'sahihbukhari': {
+  // Languages supported
+  const languageNames = {
+    'ar': 'Arabic',
+    'ur': 'Urdu',
+    'en': 'English',
+    'id': 'Indonesian',
+    'bn': 'Bengali',
+    'rus': 'Russian',
+    'tr': 'Turkish',
+    'ta': 'Tamil'
+  };
+
+  // Initialize language if not provided
+  if (!text || !Object.keys(languageNames).includes(text.toLowerCase())) {
+    let languageButtons = Object.keys(languageNames).map(lang => ({
+      title: languageNames[lang],
+      description: `Select ${languageNames[lang]} language`,
+      id: `${prefix}sahihbukhari ${lang}`
+    }));
+
+    let button = [{
+      name: 'single_select',
+      buttonParamsJson: {
+        title: 'Select Language for Hadith:',
+        sections: [{
+          title: '*Available Languages*',
+          rows: languageButtons
+        }]
+      }
+    }];
+
+    await XliconBotInc.sendButtonMsg(m.chat, '*Choose a language to fetch Hadith:*', null, '*Please select:*', null, button, m);
+    return;
+  }
+
+  // Extract language from text
+  const lang = text.toLowerCase();
+
+  // Generate a random Hadith number between 1 and 7560
+  const randomHadithNumber = Math.floor(Math.random() * 7560) + 1;
+
+  try {
+    // Fetch the Hadith from the API
+    let url = `${global.api}islamic/hadith-sahih-al-bukhari?q=${randomHadithNumber}/${lang}&apikey=${global.id}`;
+    let response = await fetch(url);
+    let data = await response.json();
+
+    // Check if the response is successful
+    if (data.status === 200 && data.result && data.result.data && data.result.data.hadiths) {
+      let hadiths = data.result.data.hadiths;
+      if (hadiths.length > 0) {
+        // Display the Hadith
+        let hadith = hadiths[0];
+        let hadithText = `*Hadith Number:* ${hadith.hadithnumber}\n`
+                        + `*Text:* ${hadith.text}\n`
+                        + `*Book:* ${hadith.reference.book}\n`
+                        + `*Hadith:* ${hadith.reference.hadith}`;
+        
+        // Prepare message with text styling
+        let captionText = `*Hadith Number:* ${hadith.hadithnumber}\n`
+                        + `*Text:* ${hadith.text}\n`
+                        + `*Book:* ${hadith.reference.book}\n`
+                        + `*Hadith:* ${hadith.reference.hadith}`;
+        
+        let msgs = generateWAMessageFromContent(m.chat, {
+            viewOnceMessage: {
+                message: {
+                    "messageContextInfo": {
+                        "deviceListMetadata": {},
+                        "deviceListMetadataVersion": 2
+                    },
+                    interactiveMessage: proto.Message.InteractiveMessage.create({
+                        body: proto.Message.InteractiveMessage.Body.create({
+                            text: captionText // Styled text
+                        }),
+                        footer: proto.Message.InteractiveMessage.Footer.create({
+                            text: `_${botname}_` // Italics styling for botname
+                        }),
+                        header: proto.Message.InteractiveMessage.Header.create({
+                            hasMediaAttachment: false,
+                            ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg')}, { upload: XliconBotInc.waUploadToServer })
+                        }),
+                        nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                            buttons: [{
+                                "name": "quick_reply",
+                                "buttonParamsJson": `{"display_text":"🌿","id":"${prefix}quickreply"}`
+                            }],
+                        }),
+                        contextInfo: {
+                            mentionedJid: [m.sender], 
+                            forwardingScore: 999,
+                            isForwarded: true,
+                            forwardedNewsletterMessageInfo: {
+                                newsletterJid: '120363232303807350@newsletter',
+                                newsletterName: ownername,
+                                serverMessageId: 143
+                            }
+                        }
+                    })
+                }
+            }
+        }, { quoted: m });
+
+        return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+      } else {
+        await XliconBotInc.sendText(m.chat, "*No Hadith found for the given query.*");
+      }
+    } else {
+      await XliconBotInc.sendText(m.chat, "*Failed to fetch Hadith. Please try again later.*");
+    }
+  } catch (error) {
+    await XliconBotInc.sendText(m.chat, "*Error occurred while fetching Hadith.*");
+  }
+}
+break;
+
+case 'jamiattirmidhi': {
+  // Languages supported
+  const languageNames = {
+    'ar': 'Arabic',
+    'ur': 'Urdu',
+    'en': 'English',
+    'id': 'Indonesian',
+    'bn': 'Bengali',
+    'tr': 'Turkish'
+  };
+
+  // Initialize language if not provided
+  if (!text || !Object.keys(languageNames).includes(text.toLowerCase())) {
+    let languageButtons = Object.keys(languageNames).map(lang => ({
+      title: languageNames[lang],
+      description: `Select ${languageNames[lang]} language`,
+      id: `${prefix}jamiattirmidhi ${lang}`
+    }));
+
+    let button = [{
+      name: 'single_select',
+      buttonParamsJson: {
+        title: 'Select Language for Hadith:',
+        sections: [{
+          title: '*Available Languages*',
+          rows: languageButtons
+        }]
+      }
+    }];
+
+    await XliconBotInc.sendButtonMsg(m.chat, '*Choose a language to fetch Hadith:*', null, '*Please select:*', null, button, m);
+    return;
+  }
+
+  // Extract language from text
+  const lang = text.toLowerCase();
+
+  // Generate a random Hadith number between 1 and 148
+  const randomHadithNumber = Math.floor(Math.random() * 148) + 1;
+
+  try {
+    // Fetch the Hadith from the API
+    let url = `${global.api}islamic/hadith-jami-at-tirmidhi?q=${randomHadithNumber}/${lang}&apikey=${global.id}`;
+    let response = await fetch(url);
+    let data = await response.json();
+
+    // Check if the response is successful
+    if (data.status === 200 && data.result && data.result.data && data.result.data.hadiths) {
+      let hadiths = data.result.data.hadiths;
+      if (hadiths.length > 0) {
+        // Display the Hadith
+        let hadith = hadiths[0];
+        let hadithText = `*Hadith Number:* ${hadith.hadithnumber}\n`
+                        + `*Text:* ${hadith.text}\n`
+                        + `*Book:* ${hadith.reference.book}\n`
+                        + `*Hadith:* ${hadith.reference.hadith}\n`
+                        + `*Grades:*\n${hadith.grades.map(grade => `  *${grade.name}:* ${grade.grade}`).join('\n')}`;
+        
+        // Prepare message with text styling
+        let captionText = `*Hadith Number:* ${hadith.hadithnumber}\n`
+                        + `*Text:* ${hadith.text}\n`
+                        + `*Book:* ${hadith.reference.book}\n`
+                        + `*Hadith:* ${hadith.reference.hadith}\n`
+                        + `*Grades:*\n${hadith.grades.map(grade => `  *${grade.name}:* ${grade.grade}`).join('\n')}`;
+        
+        let msgs = generateWAMessageFromContent(m.chat, {
+            viewOnceMessage: {
+                message: {
+                    "messageContextInfo": {
+                        "deviceListMetadata": {},
+                        "deviceListMetadataVersion": 2
+                    },
+                    interactiveMessage: proto.Message.InteractiveMessage.create({
+                        body: proto.Message.InteractiveMessage.Body.create({
+                            text: captionText // Styled text
+                        }),
+                        footer: proto.Message.InteractiveMessage.Footer.create({
+                            text: `_${botname}_` // Italics styling for botname
+                        }),
+                        header: proto.Message.InteractiveMessage.Header.create({
+                            hasMediaAttachment: false,
+                            ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg')}, { upload: XliconBotInc.waUploadToServer })
+                        }),
+                        nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                            buttons: [{
+                                "name": "quick_reply",
+                                "buttonParamsJson": `{"display_text":"🌿","id":"${prefix}quickreply"}`
+                            }],
+                        }),
+                        contextInfo: {
+                            mentionedJid: [m.sender], 
+                            forwardingScore: 999,
+                            isForwarded: true,
+                            forwardedNewsletterMessageInfo: {
+                                newsletterJid: '120363232303807350@newsletter',
+                                newsletterName: ownername,
+                                serverMessageId: 143
+                            }
+                        }
+                    })
+                }
+            }
+        }, { quoted: m });
+
+        return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+      } else {
+        await XliconBotInc.sendText(m.chat, "*No Hadith found for the given query.*");
+      }
+    } else {
+      await XliconBotInc.sendText(m.chat, "*Failed to fetch Hadith. Please try again later.*");
+    }
+  } catch (error) {
+    await XliconBotInc.sendText(m.chat, "*Error occurred while fetching Hadith.*");
+  }
+}
+break;
+
+
+case 'sunanannasai': {
+  // Languages supported
+  const languageNames = {
+    'ar': 'Arabic',
+    'ur': 'Urdu',
+    'en': 'English',
+    'id': 'Indonesian',
+    'bn': 'Bengali',
+    'tr': 'Turkish'
+  };
+
+  // Initialize language if not provided
+  if (!text || !Object.keys(languageNames).includes(text.toLowerCase())) {
+    let languageButtons = Object.keys(languageNames).map(lang => ({
+      title: languageNames[lang],
+      description: `Select ${languageNames[lang]} language`,
+      id: `${prefix}sunanannasai ${lang}`
+    }));
+
+    let button = [{
+      name: 'single_select',
+      buttonParamsJson: {
+        title: 'Select Language for Hadith:',
+        sections: [{
+          title: '*Available Languages*',
+          rows: languageButtons
+        }]
+      }
+    }];
+
+    await XliconBotInc.sendButtonMsg(m.chat, '*Choose a language to fetch Hadith:*', null, '*Please select:*', null, button, m);
+    return;
+  }
+
+  // Extract language from text
+  const lang = text.toLowerCase();
+
+  // Generate a random Hadith number between 1 and 324
+  const randomHadithNumber = Math.floor(Math.random() * 324) + 1;
+
+  try {
+    // Fetch the Hadith from the API
+    let url = `${global.api}islamic/hadith-sunan-nasai?q=${randomHadithNumber}/${lang}&apikey=${global.id}`;
+    let response = await fetch(url);
+    let data = await response.json();
+
+    // Check if the response is successful
+    if (data.status === 200 && data.result && data.result.data && data.result.data.hadiths) {
+      let hadiths = data.result.data.hadiths;
+      if (hadiths.length > 0) {
+        // Display the Hadith
+        let hadith = hadiths[0];
+        let hadithText = `*Hadith Number:* ${hadith.hadithnumber}\n`
+                        + `*Text:* ${hadith.text}\n`
+                        + `*Book:* ${hadith.reference.book}\n`
+                        + `*Hadith:* ${hadith.reference.hadith}\n`
+                        + `*Grades:*\n${hadith.grades.map(grade => `  *${grade.name}:* ${grade.grade}`).join('\n')}`;
+        
+        // Prepare message with text styling
+        let captionText = `*Hadith Number:* ${hadith.hadithnumber}\n`
+                        + `*Text:* ${hadith.text}\n`
+                        + `*Book:* ${hadith.reference.book}\n`
+                        + `*Hadith:* ${hadith.reference.hadith}\n`
+                        + `*Grades:*\n${hadith.grades.map(grade => `  *${grade.name}:* ${grade.grade}`).join('\n')}`;
+        
+        let msgs = generateWAMessageFromContent(m.chat, {
+            viewOnceMessage: {
+                message: {
+                    "messageContextInfo": {
+                        "deviceListMetadata": {},
+                        "deviceListMetadataVersion": 2
+                    },
+                    interactiveMessage: proto.Message.InteractiveMessage.create({
+                        body: proto.Message.InteractiveMessage.Body.create({
+                            text: captionText // Styled text
+                        }),
+                        footer: proto.Message.InteractiveMessage.Footer.create({
+                            text: `_${botname}_` // Italics styling for botname
+                        }),
+                        header: proto.Message.InteractiveMessage.Header.create({
+                            hasMediaAttachment: false,
+                            ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg')}, { upload: XliconBotInc.waUploadToServer })
+                        }),
+                        nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                            buttons: [{
+                                "name": "quick_reply",
+                                "buttonParamsJson": `{"display_text":"🌿","id":"${prefix}quickreply"}`
+                            }],
+                        }),
+                        contextInfo: {
+                            mentionedJid: [m.sender], 
+                            forwardingScore: 999,
+                            isForwarded: true,
+                            forwardedNewsletterMessageInfo: {
+                                newsletterJid: '120363232303807350@newsletter',
+                                newsletterName: ownername,
+                                serverMessageId: 143
+                            }
+                        }
+                    })
+                }
+            }
+        }, { quoted: m });
+
+        return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+      } else {
+        await XliconBotInc.sendText(m.chat, "*No Hadith found for the given query.*");
+      }
+    } else {
+      await XliconBotInc.sendText(m.chat, "*Failed to fetch Hadith. Please try again later.*");
+    }
+  } catch (error) {
+    await XliconBotInc.sendText(m.chat, "*Error occurred while fetching Hadith.*");
+  }
+}
+break;
+
+case 'sunanibnmajah': {
+  // Languages supported
+  const languageNames = {
+    'ar': 'Arabic',
+    'ur': 'Urdu',
+    'en': 'English',
+    'id': 'Indonesian',
+    'bn': 'Bengali',
+    'tr': 'Turkish'
+  };
+
+  // Initialize language if not provided
+  if (!text || !Object.keys(languageNames).includes(text.toLowerCase())) {
+    let languageButtons = Object.keys(languageNames).map(lang => ({
+      title: languageNames[lang],
+      description: `Select ${languageNames[lang]} language`,
+      id: `${prefix}sunanibnmajah ${lang}`
+    }));
+
+    let button = [{
+      name: 'single_select',
+      buttonParamsJson: {
+        title: 'Select Language for Hadith:',
+        sections: [{
+          title: '*Available Languages*',
+          rows: languageButtons
+        }]
+      }
+    }];
+
+    await XliconBotInc.sendButtonMsg(m.chat, '*Choose a language to fetch Hadith:*', null, '*Please select:*', null, button, m);
+    return;
+  }
+
+  // Extract language from text
+  const lang = text.toLowerCase();
+
+  // Generate a random Hadith number between 1 and 266
+  const randomHadithNumber = Math.floor(Math.random() * 266) + 1;
+
+  try {
+    // Fetch the Hadith from the API
+    let url = `${global.api}islamic/hadith-ibn-majah?q=${randomHadithNumber}/${lang}&apikey=${global.id}`;
+    let response = await fetch(url);
+    let data = await response.json();
+
+    // Check if the response is successful
+    if (data.status === 200 && data.result && data.result.data && data.result.data.hadiths) {
+      let hadiths = data.result.data.hadiths;
+      if (hadiths.length > 0) {
+        // Display the Hadith
+        let hadith = hadiths[0];
+        let hadithText = `*Hadith Number:* ${hadith.hadithnumber}\n`
+                        + `*Text:* ${hadith.text}\n`
+                        + `*Book:* ${hadith.reference.book}\n`
+                        + `*Hadith:* ${hadith.reference.hadith}\n`
+                        + `*Grades:*\n${hadith.grades.map(grade => `  *${grade.name}:* ${grade.grade}`).join('\n')}`;
+        
+        // Prepare message with text styling
+        let captionText = `*Hadith Number:* ${hadith.hadithnumber}\n`
+                        + `*Text:* ${hadith.text}\n`
+                        + `*Book:* ${hadith.reference.book}\n`
+                        + `*Hadith:* ${hadith.reference.hadith}\n`
+                        + `*Grades:*\n${hadith.grades.map(grade => `  *${grade.name}:* ${grade.grade}`).join('\n')}`;
+        
+        let msgs = generateWAMessageFromContent(m.chat, {
+            viewOnceMessage: {
+                message: {
+                    "messageContextInfo": {
+                        "deviceListMetadata": {},
+                        "deviceListMetadataVersion": 2
+                    },
+                    interactiveMessage: proto.Message.InteractiveMessage.create({
+                        body: proto.Message.InteractiveMessage.Body.create({
+                            text: captionText // Styled text
+                        }),
+                        footer: proto.Message.InteractiveMessage.Footer.create({
+                            text: `_${botname}_` // Italics styling for botname
+                        }),
+                        header: proto.Message.InteractiveMessage.Header.create({
+                            hasMediaAttachment: false,
+                            ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg')}, { upload: XliconBotInc.waUploadToServer })
+                        }),
+                        nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                            buttons: [{
+                                "name": "quick_reply",
+                                "buttonParamsJson": `{"display_text":"🌿","id":"${prefix}quickreply"}`
+                            }],
+                        }),
+                        contextInfo: {
+                            mentionedJid: [m.sender], 
+                            forwardingScore: 999,
+                            isForwarded: true,
+                            forwardedNewsletterMessageInfo: {
+                                newsletterJid: '120363232303807350@newsletter',
+                                newsletterName: ownername,
+                                serverMessageId: 143
+                            }
+                        }
+                    })
+                }
+            }
+        }, { quoted: m });
+
+        return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+      } else {
+        await XliconBotInc.sendText(m.chat, "*No Hadith found for the given query.*");
+      }
+    } else {
+      await XliconBotInc.sendText(m.chat, "*Failed to fetch Hadith. Please try again later.*");
+    }
+  } catch (error) {
+    await XliconBotInc.sendText(m.chat, "*Error occurred while fetching Hadith.*");
+  }
+}
+break;
+
+
+case 'sunanabudawud': {
+  // Languages supported
+  const languageNames = {
+    'ar': 'Arabic',
+    'ur': 'Urdu',
+    'en': 'English',
+    'id': 'Indonesian',
+    'bn': 'Bengali',
+    'rus': 'Russian',
+    'tr': 'Turkish'
+  };
+
+  // Initialize language if not provided
+  if (!text || !Object.keys(languageNames).includes(text.toLowerCase())) {
+    let languageButtons = Object.keys(languageNames).map(lang => ({
+      title: languageNames[lang],
+      description: `Select ${languageNames[lang]} language`,
+      id: `${prefix}sunanabudawud ${lang}`
+    }));
+
+    let button = [{
+      name: 'single_select',
+      buttonParamsJson: {
+        title: 'Select Language for Hadith:',
+        sections: [{
+          title: '*Available Languages*',
+          rows: languageButtons
+        }]
+      }
+    }];
+
+    await XliconBotInc.sendButtonMsg(m.chat, '*Choose a language to fetch Hadith:*', null, '*Please select:*', null, button, m);
+    return;
+  }
+
+  // Extract language from text
+  const lang = text.toLowerCase();
+
+  // Generate a random Hadith number between 1 and 390
+  const randomHadithNumber = Math.floor(Math.random() * 390) + 1;
+
+  try {
+    // Fetch the Hadith from the API
+    let url = `${global.api}islamic/hadith-abu-dawud?q=${randomHadithNumber}/${lang}&apikey=${global.id}`;
+    let response = await fetch(url);
+    let data = await response.json();
+
+    // Check if the response is successful
+    if (data.status === 200 && data.result && data.result.data && data.result.data.hadiths) {
+      let hadiths = data.result.data.hadiths;
+      if (hadiths.length > 0) {
+        // Display the Hadith
+        let hadith = hadiths[0];
+        let hadithText = `*Hadith Number:* ${hadith.hadithnumber}\n`
+                        + `*Text:* ${hadith.text}\n`
+                        + `*Book:* ${hadith.reference.book}\n`
+                        + `*Hadith:* ${hadith.reference.hadith}\n`
+                        + `*Grades:*\n${hadith.grades.map(grade => `  *${grade.name}:* ${grade.grade}`).join('\n')}`;
+        
+        // Prepare message with text styling
+        let captionText = `*Hadith Number:* ${hadith.hadithnumber}\n`
+                        + `*Text:* ${hadith.text}\n`
+                        + `*Book:* ${hadith.reference.book}\n`
+                        + `*Hadith:* ${hadith.reference.hadith}\n`
+                        + `*Grades:*\n${hadith.grades.map(grade => `  *${grade.name}:* ${grade.grade}`).join('\n')}`;
+        
+        let msgs = generateWAMessageFromContent(m.chat, {
+            viewOnceMessage: {
+                message: {
+                    "messageContextInfo": {
+                        "deviceListMetadata": {},
+                        "deviceListMetadataVersion": 2
+                    },
+                    interactiveMessage: proto.Message.InteractiveMessage.create({
+                        body: proto.Message.InteractiveMessage.Body.create({
+                            text: captionText // Styled text
+                        }),
+                        footer: proto.Message.InteractiveMessage.Footer.create({
+                            text: `_${botname}_` // Italics styling for botname
+                        }),
+                        header: proto.Message.InteractiveMessage.Header.create({
+                            hasMediaAttachment: false,
+                            ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg')}, { upload: XliconBotInc.waUploadToServer })
+                        }),
+                        nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                            buttons: [{
+                                "name": "quick_reply",
+                                "buttonParamsJson": `{"display_text":"🌿","id":"${prefix}quickreply"}`
+                            }],
+                        }),
+                        contextInfo: {
+                            mentionedJid: [m.sender], 
+                            forwardingScore: 999,
+                            isForwarded: true,
+                            forwardedNewsletterMessageInfo: {
+                                newsletterJid: '120363232303807350@newsletter',
+                                newsletterName: ownername,
+                                serverMessageId: 143
+                            }
+                        }
+                    })
+                }
+            }
+        }, { quoted: m });
+
+        return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+      } else {
+        await XliconBotInc.sendText(m.chat, "*No Hadith found for the given query.*");
+      }
+    } else {
+      await XliconBotInc.sendText(m.chat, "*Failed to fetch Hadith. Please try again later.*");
+    }
+  } catch (error) {
+    await XliconBotInc.sendText(m.chat, "*Error occurred while fetching Hadith.*");
+  }
+}
+break;
+
 
 
  //------------------------------------------------------------------------------------------//
@@ -5950,6 +6714,126 @@ _*Here is the result of ${command}*_`
 return await XliconBotInc.relayMessage(m.chat, msgs.message, {})
                 }
 break
+
+//MEW ANIME CMDS
+//----------------------------------------------------------------------------------------------//
+
+
+case 'bilibili': {
+  if (!text) return replygcxlicon(`Example : ${prefix + command} https://www.bilibili.com/video/BV1cy4y1k7A2`);
+
+  try {
+    // Fetch video information from Bilibili API
+    var response = await fetch(`${global.api}downloader/bilibili?apikey=${global.id}&url=${encodeURIComponent(text)}`);
+    
+    if (!response.ok) {
+      return replygcxlicon('❌ API request failed. Please check the URL and try again.');
+    }
+
+    var json = await response.json();
+    console.log('API Response:', json); // Log the full API response
+
+    // Check if the response contains video data
+    if (!json || !json.result || !json.result.download_url) {
+      return replygcxlicon('❌ No video found. Please check the URL and try again.');
+    }
+
+    // Prepare message with video
+    let videoUrl = json.result.download_url;
+    let caption = `
+      📹 *Bilibili Video Downloaded*
+      
+      📂 Title: ${json.result.title}
+      📅 Upload Date: ${json.result.upload_date}
+      👤 Uploader: ${json.result.uploader}
+      
+      🔗 Download Link: ${videoUrl}
+    `;
+
+    // Send message with video attachment
+    let msgs = generateWAMessageFromContent(m.chat, {
+      viewOnceMessage: {
+        message: {
+          "messageContextInfo": {
+            "deviceListMetadata": {},
+            "deviceListMetadataVersion": 2
+          },
+          interactiveMessage: proto.Message.InteractiveMessage.create({
+            body: proto.Message.InteractiveMessage.Body.create({
+              text: caption
+            }),
+            footer: proto.Message.InteractiveMessage.Footer.create({
+              text: botname
+            }),
+            header: proto.Message.InteractiveMessage.Header.create({
+              hasMediaAttachment: true,
+              ...await prepareWAMessageMedia({ video: { url: videoUrl }}, { upload: XliconBotInc.waUploadToServer })
+            }),
+            nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+              buttons: [{
+                "name": "quick_reply",
+                "buttonParamsJson": `{\"display_text\":\"🔄 Refresh\",\"id\":\"\"}`
+              }],
+            }),
+            contextInfo: {
+              mentionedJid: [m.sender], 
+              forwardingScore: 999,
+              isForwarded: true,
+              forwardedNewsletterMessageInfo: {
+                newsletterJid: '120363232303807350@newsletter',
+                newsletterName: ownername,
+                serverMessageId: 143
+              }
+            }
+          })
+        }
+      }
+    }, { quoted: m });
+
+    await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+  } catch (error) {
+    console.error('Failed to fetch video:', error);
+    replygcxlicon('❌ An error occurred while fetching the video. Please try again later.');
+  }
+}
+break;
+
+case 'dailymotion': {
+  if (!text) return replygcxlicon(`Example : ${prefix + command} https://dai.ly/x9492ja`);
+
+  try {
+    // Fetch video information from Dailymotion API
+    const response = await fetch(`${global.api}downloader/dailymotion?apikey=${global.id}&url=${encodeURIComponent(text)}`);
+    const json = await response.json();
+
+    // Check if the response contains video data
+    if (!json || !json.result || !json.result.medias || json.result.medias.length === 0) {
+      return replygcxlicon('❌ Failed to fetch video. Please try again.');
+    }
+
+    // Choose the best quality video available
+    const video = json.result.medias.find(media => media.quality === '360') || json.result.medias[0];
+    const videoUrl = video.url;
+
+    // Send a reaction to indicate the start of the download
+    await XliconBotInc.sendMessage(m.chat, { react: { text: "⏱️", key: m.key } });
+
+    // Send the video
+    await XliconBotInc.sendMessage(m.chat, { video: { url: videoUrl }, caption: `📹 *Dailymotion Video Downloaded*\n\n📂 Title: ${json.result.title}\n📅 Duration: ${json.result.duration}\n🌐 Source: ${json.result.source}\n\n🔗 Download Link: ${videoUrl}` }, { quoted: m });
+
+    // Send a reaction to indicate the download is complete
+    await XliconBotInc.sendMessage(m.chat, { react: { text: "☑️", key: m.key } });
+
+  } catch (err) {
+    console.error(err);
+    await XliconBotInc.sendMessage(m.chat, { react: { text: "✖️", key: m.key } });
+    replygcxlicon('❌ An error occurred while fetching the video. Please try again later.');
+  }
+}
+break;
+
+
+//--------------------------------------------------------------------------------------------//
 case 'searchanime': {
 if (!text) return replygcxlicon(`Which anime are you lookin for?`)
 const malScraper = require('mal-scraper')
@@ -15527,6 +16411,45 @@ case 'listowner': {
             replygcxlicon(m.chat)
            }
           break
+
+
+          case 'banchat': {
+            if (!XliconTheCreator) {
+              if (m.isGroup) {
+                const groupId = m.chat;
+                
+                // Load the list of banned groups from the JSON file
+                let bannedGroups = require('./database/jid.json');
+                
+                // Check if the group is already banned
+                if (!bannedGroups.includes(groupId)) {
+                  // Add the group ID to the list of banned groups
+                  bannedGroups.push(groupId);
+                  
+                  // Save the updated list to the JSON file
+                  const fs = require('fs');
+                  fs.writeFileSync('./database/jid.json', JSON.stringify(bannedGroups, null, 2));
+                  
+                  // Notify the group that it has been banned
+                  replygcxlicon(`This chat has been banned for using the bot.`);
+                  
+                  // Leave the group
+                  await XliconBotInc.groupLeave(groupId);
+                } else {
+                  replygcxlicon(`This chat is already banned.`);
+                }
+                
+              } else {
+                replygcxlicon(`This command can only be used in a group chat.`);
+              }
+            }
+          }
+          break;
+          
+           
+
+
+
 			case 'getexif': case 'getwm': case 'getwatermark':{
                 if (!XliconTheCreator) return XliconStickOwner()
                replygcxlicon(`*Water Mark/Exif of ${botname} is*\n\n${setv} Packname : ${packname}\n${setv} Author : ${author}`)
@@ -18109,28 +19032,50 @@ case 'ytmp3': case 'ytaudio': case 'ytplayaudio': {
 				await XliconBotInc.sendMessage(m.chat, { video: { url: hasil.result }, caption: `*📍Title:* ${hasil.title}\n*✏Description:* ${hasil.desc ? hasil.desc : ''}\n*🚀Channel:* ${hasil.channel}\n*🗓Upload at:* ${hasil.uploadDate}` }, { quoted: m });
 			}
 			break
-			case 'apk': {
-	try {
+
+      case 'apk': {
+  try {
     if (command === 'apk') {
       if (!text) return replygcxlicon(`*[❗] Please provide the APK Name you want to download.*`);
-      let data = await download(text);
-      if (data.size.replace(' MB', '') > 200) {
+
+      // Fetch APK data from the API
+      let apiUrl = `${global.api}downloader/apk?apikey=${global.id}&q=${encodeURIComponent(text)}`;
+      let response = await fetch(apiUrl);
+      let data = await response.json();
+
+      if (data.status !== 200) {
+        return replygcxlicon(`*[❗] No results found for the APK Name you provided.*`);
+      }
+
+      let apkData = data.result;
+
+      // Check if the file size is too large
+      let sizeMB = parseFloat(apkData.size.replace(' MB', ''));
+      if (sizeMB > 200) {
         return await XliconBotInc.sendMessage(m.chat, { text: '*[⛔] The file is too large.*' }, { quoted: m });
       }
-      if (data.size.includes('GB')) {
-        return await XliconBotInc.sendMessage(m.chat, { text: '*[⛔] The file is too large.*' }, { quoted: m });
-      }
+
+      // Send the APK file
       await XliconBotInc.sendMessage(
         m.chat,
-        { document: { url: data.dllink }, mimetype: 'application/vnd.android.package-archive', fileName: data.name + '.apk', caption: null },
+        {
+          document: { url: apkData.dllink },
+          mimetype: 'application/vnd.android.package-archive',
+          fileName: apkData.name + '.apk',
+          caption: `*APK Name:* ${apkData.name}\n*Size:* ${apkData.size}\n*Last Updated:* ${apkData.lastup}`,
+        },
         { quoted: m }
-      )
+      );
     }
-  } catch {
-    return replygcxlicon(`*[❗] An error occurred. Make sure to provide a valid link.*`);
+  } catch (error) {
+    console.error(error);
+    return replygcxlicon(`*[❗] An error occurred. Please try again later.*`);
   }
-};
-break
+}
+break;
+  
+      
+      
 case 'mega':{
 	try {
 if (!text) return replygcxlicon(`${prefix + command} https://mega.nz/file/ovJTHaQZ#yAbkrvQgykcH_NDKQ8eIc0zvsN7jonBbHZ_HTQL6lZ8`);
@@ -19151,6 +20096,8 @@ let xmenu_oh = `
 │${setv} ${prefix}facebook 🅕
 │${setv} ${prefix}twitter 🅕
 │${setv} ${prefix}apk 🅕
+│${setv} ${prefix}bilibili 🅕
+│${setv} ${prefix}dailymotion 🅕
 │${setv} ${prefix}mega 🅕
 │${setv} ${prefix}mediafire 🅕
 │${setv} ${prefix}google 🅕
@@ -19577,6 +20524,13 @@ let xmenu_oh = `
 │${setv} ${prefix}quran 🅕
 │${setv} ${prefix}gita 🅕
 │${setv} ${prefix}namazchk 🅕
+│${setv} ${prefix}prophetname 🅕
+│${setv} ${prefix}prayertime 🅕
+│${setv} ${prefix}sahihbukhari 🅕
+│${setv} ${prefix}jamiattirmidhi 🅕
+│${setv} ${prefix}sunanannasai 🅕
+│${setv} ${prefix}sunanibnmajah 🅕
+│${setv} ${prefix}sunanabudawud 🅕
 │${setv} ${prefix}kisahnabi 🅕
 │${setv} ${prefix}asmaulhusna 🅕
 │${setv} ${prefix}duas 🅕
@@ -21224,6 +22178,8 @@ let xmenu_oh = `
 │${setv} ${prefix}igimage 🅕
 │${setv} ${prefix}facebook 🅕
 │${setv} ${prefix}twitter 🅕
+│${setv} ${prefix}bilibili 🅕
+│${setv} ${prefix}dailymotion 🅕
 │${setv} ${prefix}apk 🅕
 │${setv} ${prefix}mega 🅕
 │${setv} ${prefix}mediafire 🅕
@@ -25088,7 +26044,7 @@ let xmenu_oh = `
 ├ *🅟 = For Premium User*
 ╰─┬────❍
 ╭─┴❍「 *Anime* 」❍
-│${setv} ${prefix}searchmenu 🅕
+│${setv} ${prefix}searchamime 🅕
 │${setv} ${prefix}stickhandhold 🅕
 │${setv} ${prefix}stickshinobu 🅕
 │${setv} ${prefix}stickcuddle 🅕
@@ -26707,6 +27663,13 @@ let xmenu_oh = `
 │${setv} ${prefix}quran 🅕
 │${setv} ${prefix}gita 🅕
 │${setv} ${prefix}namazchk 🅕
+│${setv} ${prefix}prophetname 🅕
+│${setv} ${prefix}prayertime 🅕
+│${setv} ${prefix}sahihbukhari 🅕
+│${setv} ${prefix}jamiattirmidhi 🅕
+│${setv} ${prefix}sunanannasai 🅕
+│${setv} ${prefix}sunanibnmajah 🅕
+│${setv} ${prefix}sunanabudawud 🅕
 │${setv} ${prefix}kisahnabi 🅕
 │${setv} ${prefix}asmaulhusna 🅕
 │${setv} ${prefix}duas 🅕

@@ -6930,7 +6930,7 @@ _*Here is the result of ${animeName}*_\n\n${animetxt}`
 break;
 
 
-case 'mangasearch': {
+case 'searchmanga': {
   const title = text.trim(); // Assuming 'text' contains the user's input for the manga title
   if (!title) {
     await XliconBotInc.sendMessage(m.chat, { text: 'Please provide a manga title to search for.' }, { quoted: m });

@@ -6720,6 +6720,7 @@ break
 
 
 case 'bilibili': {
+  if (!isPremium) return replyprem(mess.premium)
   if (!text) return replygcxlicon(`Example : ${prefix + command} https://www.bilibili.com/video/BV1cy4y1k7A2`);
 
   try {
@@ -6734,17 +6735,20 @@ case 'bilibili': {
     console.log('API Response:', json); // Log the full API response
 
     // Check if the response contains video data
-    if (!json || !json.result || !json.result.download_url) {
+    if (json.status !== 200 || !json.result || !json.result.medias || json.result.medias.length === 0) {
       return replygcxlicon('❌ No video found. Please check the URL and try again.');
     }
 
+    // Choose the best quality video available
+    const video = json.result.medias.find(media => media.videoAvailable) || json.result.medias[0];
+    const videoUrl = video.url;
+
     // Prepare message with video
-    let videoUrl = json.result.download_url;
     let caption = `
       📹 *Bilibili Video Downloaded*
       
       📂 Title: ${json.result.title}
-      📅 Upload Date: ${json.result.upload_date}
+      📅 Duration: ${json.result.duration}
       👤 Uploader: ${json.result.uploader}
       
       🔗 Download Link: ${videoUrl}
@@ -6798,12 +6802,18 @@ case 'bilibili': {
 }
 break;
 
+
 case 'dailymotion': {
+  if (!isPremium) return replyprem(mess.premium)
   if (!text) return replygcxlicon(`Example : ${prefix + command} https://dai.ly/x9492ja`);
 
   try {
+    // Ensure global.api is an absolute URL
+    const apiUrl = new URL(`${global.api}downloader/dailymotion?apikey=${global.id}&url=${encodeURIComponent(text)}`);
+
+
     // Fetch video information from Dailymotion API
-    const response = await fetch(`${global.api}downloader/dailymotion?apikey=${global.id}&url=${encodeURIComponent(text)}`);
+    const response = await fetch(apiUrl.toString());
     const json = await response.json();
 
     // Check if the response contains video data
@@ -6833,6 +6843,144 @@ case 'dailymotion': {
 break;
 
 
+case 'animeinfo': {
+  if (!text) return replygcxlicon(`Which anime are you looking for?`);
+
+  const fetchAnimeInfo = async (animeName) => {
+    const api = `https://abra.abrahamdw882.workers.dev/search/${encodeURIComponent(animeName)}`;
+
+    try {
+      const response = await fetch(api);
+      if (!response.ok) {
+        console.error(`API response not OK: ${response.status} ${response.statusText}`);
+        throw new Error('API response not OK');
+      }
+      const json = await response.json();
+      if (json.results && json.results.length > 0) {
+        return json.results; // Return results if found
+      } else {
+        console.error('No results found in API response');
+      }
+    } catch (error) {
+      console.error(`Error fetching from ${api}:`, error);
+    }
+    return null; // Return null if no results found
+  };
+
+  await XliconStickWait();
+  const animeName = text.trim();
+  const results = await fetchAnimeInfo(animeName);
+
+  if (!results) {
+    return replygcxlicon('❌ Failed to fetch anime information. Please try again.');
+  }
+
+  let animetxt = `Anime Information for *"${animeName}"*:\n\n`;
+  results.forEach(anime => {
+    animetxt += `
+🎀 *Title:* ${anime.title}
+🎋 *Release Date:* ${anime.releaseDate}
+🆔 *ID:* ${anime.id}
+🌐 *Link:* ${anime.link}
+🖼️ *Image:* ${anime.img}\n\n`;
+  });
+
+  let msgs = generateWAMessageFromContent(m.chat, {
+    viewOnceMessage: {
+      message: {
+        "messageContextInfo": {
+          "deviceListMetadata": {},
+          "deviceListMetadataVersion": 2
+        },
+        interactiveMessage: proto.Message.InteractiveMessage.create({
+          body: proto.Message.InteractiveMessage.Body.create({
+            text: `Hi ${m.pushName}
+_*Here is the result of ${animeName}*_\n\n${animetxt}`
+          }),
+          footer: proto.Message.InteractiveMessage.Footer.create({
+            text: botname
+          }),
+          header: proto.Message.InteractiveMessage.Header.create({
+            hasMediaAttachment: false,
+            ...await prepareWAMessageMedia({ image: { url: results[0].img }}, { upload: XliconBotInc.waUploadToServer })
+          }),
+          nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+            buttons: [{
+              "name": "quick_reply",
+              "buttonParamsJson": `{\"display_text\":\"🌿\",\"id\":\""}` 
+            }],
+          }), 
+          contextInfo: {
+            mentionedJid: [m.sender], 
+            forwardingScore: 999,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363232303807350@newsletter',
+              newsletterName: ownername,
+              serverMessageId: 143
+            }
+          }
+        })
+      }
+    }
+  }, { quoted: m });
+
+  return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+}
+break;
+
+
+case 'mangasearch': {
+  const title = text.trim(); // Assuming 'text' contains the user's input for the manga title
+  if (!title) {
+    await XliconBotInc.sendMessage(m.chat, { text: 'Please provide a manga title to search for.' }, { quoted: m });
+    return;
+  }
+
+  const baseUrl = 'https://api.mangadex.org';
+  try {
+    const resp = await axios({
+      method: 'GET',
+      url: `${baseUrl}/manga`,
+      params: {
+        title: title
+      }
+    });
+
+    if (resp.data.data.length === 0) {
+      await XliconBotInc.sendMessage(m.chat, { text: 'No manga found with that title.' }, { quoted: m });
+      return;
+    }
+
+    const mangaIds = resp.data.data.map(manga => manga.id);
+    let statsMessage = 'Manga Statistics:\n';
+
+    for (const mangaID of mangaIds) {
+      const statsResp = await axios({
+        method: 'GET',
+        url: `${baseUrl}/statistics/manga/${mangaID}`
+      });
+
+      const { rating, follows } = statsResp.data.statistics[mangaID];
+      const coverUrl = `https://uploads.mangadex.org/covers/${mangaID}.png`;
+
+      statsMessage += `
+        Manga ID: ${mangaID}
+        Mean Rating: ${rating.average}
+        Bayesian Rating: ${rating.bayesian}
+        Follows: ${follows}
+        Cover Image: ${coverUrl}
+      `;
+    }
+
+    await XliconBotInc.sendMessage(m.chat, { text: statsMessage }, { quoted: m });
+  } catch (error) {
+    console.error('Error fetching manga:', error.message);
+    await XliconBotInc.sendMessage(m.chat, { text: 'An error occurred while searching for the manga. Please try again later.' }, { quoted: m });
+  }
+}
+break;
+
 //--------------------------------------------------------------------------------------------//
 case 'searchanime': {
 if (!text) return replygcxlicon(`Which anime are you lookin for?`)
@@ -6841,20 +6989,20 @@ await XliconStickWait()
         const anime = await malScraper.getInfoFromName(text).catch(() => null)
         if (!anime) return replygcxlicon(`Could not find`)
 let animetxt = `
-🎀 *Title: ${anime.title}*
-🎋 *Type: ${anime.type}*
-🎐 *Premiered on: ${anime.premiered}*
-💠 *Total Episodes: ${anime.episodes}*
-📈 *Status: ${anime.status}*
-💮 *Genres: ${anime.genres}
-📍 *Studio: ${anime.studios}*
-🌟 *Score: ${anime.score}*
-💎 *Rating: ${anime.rating}*
-🏅 *Rank: ${anime.ranked}*
-💫 *Popularity: ${anime.popularity}*
-♦️ *Trailer: ${anime.trailer}*
-🌐 *URL: ${anime.url}*
-❄ *Description:* ${anime.synopsis}*`
+🎀 *Title:* ${anime.title}
+🎋 *Type:* ${anime.type}
+🎐 *Premiered on:* ${anime.premiered}
+💠 *Total Episodes:* ${anime.episodes}
+📈 *Status:* ${anime.status}
+💮 *Genres:* ${anime.genres}
+📍 *Studio:* ${anime.studios}
+🌟 *Score:* ${anime.score}
+💎 *Rating:* ${anime.rating}
+🏅 *Rank:* ${anime.ranked}
+💫 *Popularity:* ${anime.popularity}
+♦️ *Trailer:* ${anime.trailer}
+🌐 *URL:* ${anime.url}
+❄ *Description:* ${anime.synopsis}`
 let msgs = generateWAMessageFromContent(m.chat, {
   viewOnceMessage: {
     message: {
@@ -6898,6 +7046,10 @@ return await XliconBotInc.relayMessage(m.chat, msgs.message, {})
                 
                 }
                 break
+
+
+
+
 			case 'loli': {
             let baseUrl = 'https://weeb-api.vercel.app/'
       const response = await fetch(baseUrl + command)
@@ -10983,7 +11135,7 @@ await XliconBotInc.relayMessage(m.chat, msgs.message, {})
 case 'chatgpt4': {
 	if (!text) return replygcxlicon(`*• Example:* ${prefix + command} what is your name`);   
         try {
-let gpt = await (await fetch(`https://api.maher-zubair.tech/ai/chatgpt?q=${text}`)).json()
+let gpt = await (await fetch(`https://api.vihangayt.com/ai/gpt4-v2?q=${text}`)).json()
 let msgs = generateWAMessageFromContent(m.chat, {
   viewOnceMessage: {
     message: {
@@ -10993,7 +11145,7 @@ let msgs = generateWAMessageFromContent(m.chat, {
         },
         interactiveMessage: proto.Message.InteractiveMessage.create({
           body: proto.Message.InteractiveMessage.Body.create({
-            text: '> Chat GPT\n\n' + gpt.result
+            text: '> Open Ai\n\n' + gpt.data
           }),
           footer: proto.Message.InteractiveMessage.Footer.create({
             text: botname
@@ -11032,7 +11184,7 @@ await XliconBotInc.relayMessage(m.chat, msgs.message, {})
     case 'mathsai': {
       if (!text) return replygcxlicon(`*• Example:* ${prefix + command} what is your name`);   
             try {
-    let gpt = await (await fetch(`https://api.maher-zubair.tech/ai/mathssolve?q=${text}`)).json()
+    let gpt = await (await fetch(`${global.api}ai/math?apikey=${global.id}&prompt=${text}`)).json()
     let msgs = generateWAMessageFromContent(m.chat, {
       viewOnceMessage: {
         message: {
@@ -13185,61 +13337,60 @@ let regex1 = /(?:https|git)(?::\/\/|@)github\.com[\/:]([^\/:]+)\/(.+)/i
     let filename = (await fetch(url, {method: 'HEAD'})).headers.get('content-disposition').match(/attachment; filename=(.*)/)[1]
     XliconBotInc.sendMessage(m.chat, { document: { url: url }, fileName: filename+'.zip', mimetype: 'application/zip' }, { quoted: m }).catch((err) => replygcxlicon(mess.error))
 break
-           case 'spotify':{
-	if (!text) return replygcxlicon(`*Please enter a song name*`)
-    try {
-        const apiUrl = `https://www.guruapi.tech/api/spotifyinfo?text=${encodeURIComponent(text)}`
-        const response = await fetch(apiUrl);
-        if (!response.ok) {
-            console.log('Error searching for song:', response.statusText)
-            return replygcxlicon('Error searching for song')
-        }
-        const data = await response.json()
-        const coverimage = data.spty.results.thumbnail
-        const name = data.spty.results.title
-        const slink = data.spty.results.url
-        const dlapi = `https://www.guruapi.tech/api/spotifydl?text=${encodeURIComponent(text)}`
-        const audioResponse = await fetch(dlapi)
-        if (!audioResponse.ok) {
-            console.log('Error fetching audio:', audioResponse.statusText)
-            return replygcxlicon('Error fetching audio')
-        }
-        const audioBuffer = await audioResponse.buffer()
-        const tempDir = os.tmpdir()
-        const audioFilePath = path.join(tempDir, 'audio.mp3')
-        try {
-            await fs.promises.writeFile(audioFilePath, audioBuffer)
-        } catch (writeError) {
-            console.error('Error writing audio file:', writeError)
-            return replygcxlicon( 'Error writing audio file')
-        }
-        let doc = {
-            audio: {
-              url: audioFilePath
-            },
-            mimetype: 'audio/mpeg',
-            ptt: true,
-            waveform:  [100, 0, 100, 0, 100, 0, 100],
-            fileName: "dgxlicon",
-            contextInfo: {
-              mentionedJid: [m.sender],
-              externalAdReply: {
-                title: `PLAYING TO ${name}`,
-                body: botname,
-                thumbnailUrl: coverimage,
-                sourceUrl: websitex,
-                mediaType: 1,
-                renderLargerThumbnail: true
-              }
-            }
-        }        
-        await XliconBotInc.sendMessage(m.chat, doc, { quoted: m })
-    } catch (error) {
-        console.error('Error fetching Spotify data:', error)
-        return replygcxlicon('*Error*')
+
+
+case 'spotify': {
+  if (!text) return replygcxlicon(`*Where is the Song Name?*\n_Example :_\n${prefix}${command} Metamorphosis`)
+
+  try {
+    // Fetch Spotify search results
+    let api = await fetchJson(`https://api.junn4.my.id/search/spotify?query=${text}`);
+    
+    if (!api.data || api.data.length === 0) {
+      await XliconBotInc.sendMessage(m.chat, '❌ No results found on Spotify. Please try again with a different query.', { quoted: m });
+      return;
     }
-    }
-    break
+
+    // Prepare the response message with song information
+    const songInfo = `*🎶 S P O T I F Y - D L 🎶*
+
+• 🎵 *Title*: ${api.data[0].title}
+• ⏱️ *Duration*: ${api.data[0].duration}
+• ⭐ *Popularity*: ${api.data[0].popularity}
+• 🔗 *Url*: ${api.data[0].url}`;
+
+    // Send the song info to the user
+    await XliconBotInc.sendMessage(m.chat, { text: songInfo }, { quoted: m });
+
+    // Fetch the Spotify song download link
+    let spodl = await fetchJson(`https://api.junn4.my.id/download/spotify?url=${api.data[0].url}`);
+    const spoDl = spodl.data.download;
+
+    // Send the Spotify song as an audio message with additional context (external ad reply)
+    await XliconBotInc.sendMessage(m.chat, {
+      audio: { url: spoDl },
+      mimetype: 'audio/mpeg',
+      contextInfo: {
+        externalAdReply: {
+          title: `🎵 - sᴘᴏᴛɪғʏ -`,
+          body: api.data[0].title,
+          thumbnailUrl: spodl.data.image, // Use the song's album image as thumbnail
+          sourceUrl: global.sourceurl || spodl.data.url, // URL to the source (you can customize this)
+          mediaType: 2,
+          showAdAttribution: true,
+          renderLargerThumbnail: true
+        }
+      }
+    }, { quoted: m });
+
+  } catch (error) {
+    console.error('Error fetching Spotify data:', error);
+    await XliconBotInc.sendMessage(m.chat, { text: '❌ An error occurred while fetching the Spotify data. Please try again later.' }, { quoted: m });
+  }
+}
+break;
+
+
 			case 'mediafire': {
   	if (!args[0]) return replygcxlicon(`Enter the mediafire link next to the command`)
     if (!args[0].match(/mediafire/gi)) return replygcxlicon(`Link incorrect`)
@@ -17859,6 +18010,7 @@ await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, {
                 	}
                 }
                 break
+
 			case 'setbio': case 'setbotbio': {
 				if (!XliconTheCreator) return XliconStickOwner()
 				if (!text) return replygcxlicon(`Where's the text??`)
@@ -18665,8 +18817,8 @@ replygcxlicon(`Send/Reply Images/Videos/Gifs With Captions ${prefix+command}\nVi
 }
 }
 break
+
 case 'swm': case 'steal': case 'stickerwm': case 'take':{
-if (!isPremium) return replyprem(mess.premium)
 if (!args.join(" ")) return replygcxlicon(`Where is the text?`)
 const swn = args.join(" ")
 const pcknm = swn.split("|")[0]
@@ -18817,6 +18969,8 @@ break
 				replygcxlicon(hasil)
 			}
 			break
+
+
 			// Search Menu
 			case 'play':  case 'song': {
 if (!text) return replygcxlicon(`Example : ${prefix + command} anime whatsapp status`)
@@ -18844,11 +18998,14 @@ await XliconBotInc.sendMessage(m.chat,{
 },{quoted:m})
 await fs.unlinkSync(pl.path)
 }catch{
-	replygcxlicon(`Music not found.`)
+	replygcxlicon(`Command will not work on Pannel Use ${prefix}spotify.`)
 	}
 }
 break
-			
+
+
+
+
 			case 'pixiv': {
 				if (!text) return replygcxlicon(`Example: ${prefix + command} hello`)
 				try {
@@ -19002,36 +19159,256 @@ return await XliconBotInc.relayMessage(m.chat, msgs.message, {})
 			break
 			
 			// Downloader Menu
-case 'ytmp3': case 'ytaudio': case 'ytplayaudio': {
-				if (!text) return replygcxlicon(`Example: ${prefix + command} youtube_url`)
-				if (!text.includes('youtu')) return replygcxlicon('The URL does not contain results from YouTube!')
-				const hasil = await ytMp3(text);
-				XliconStickWait()
-				await XliconBotInc.sendMessage(m.chat, {
-					audio: { url: hasil.result },
-					mimetype: 'audio/mpeg',
-					contextInfo: {
-						externalAdReply: {
-							title: hasil.title,
-							body: hasil.channel,
-							previewType: 'PHOTO',
-							thumbnailUrl: hasil.thumb,
-							mediaType: 1,
-							renderLargerThumbnail: true,
-							sourceUrl: text
-						}
-					}
-				}, { quoted: m });
-			}
-			break
-			case 'ytmp4': case 'ytvideo': case 'ytplayvideo': {
-				if (!text) return replygcxlicon(`Example: ${prefix + command} url_youtube`)
-				if (!text.includes('youtu')) return replygcxlicon('The link is not a youtube link!')
-				const hasil = await ytMp4(text);
-				XliconStickWait()
-				await XliconBotInc.sendMessage(m.chat, { video: { url: hasil.result }, caption: `*📍Title:* ${hasil.title}\n*✏Description:* ${hasil.desc ? hasil.desc : ''}\n*🚀Channel:* ${hasil.channel}\n*🗓Upload at:* ${hasil.uploadDate}` }, { quoted: m });
-			}
-			break
+// case 'ytmp3': case 'ytaudio': case 'ytplayaudio': {
+// 				if (!text) return replygcxlicon(`Example: ${prefix + command} youtube_url`)
+// 				if (!text.includes('youtu')) return replygcxlicon('The URL does not contain results from YouTube!')
+// 				const hasil = await ytMp3(text);
+// 				XliconStickWait()
+// 				await XliconBotInc.sendMessage(m.chat, {
+// 					audio: { url: hasil.result },
+// 					mimetype: 'audio/mpeg',
+// 					contextInfo: {
+// 						externalAdReply: {
+// 							title: hasil.title,
+// 							body: hasil.channel,
+// 							previewType: 'PHOTO',
+// 							thumbnailUrl: hasil.thumb,
+// 							mediaType: 1,
+// 							renderLargerThumbnail: true,
+// 							sourceUrl: text
+// 						}
+// 					}
+// 				}, { quoted: m });
+// 			}
+// 			break
+// 			case 'ytmp4': case 'ytvideo': case 'ytplayvideo': {
+// 				if (!text) return replygcxlicon(`Example: ${prefix + command} url_youtube`)
+// 				if (!text.includes('youtu')) return replygcxlicon('The link is not a youtube link!')
+// 				const hasil = await ytMp4(text);
+// 				XliconStickWait()
+// 				await XliconBotInc.sendMessage(m.chat, { video: { url: hasil.result }, caption: `*📍Title:* ${hasil.title}\n*✏Description:* ${hasil.desc ? hasil.desc : ''}\n*🚀Channel:* ${hasil.channel}\n*🗓Upload at:* ${hasil.uploadDate}` }, { quoted: m });
+// 			}
+// 			break  
+
+//----------------------------------------------------------------------------------------------//
+
+
+
+case 'ytmp3': {
+  if (!text) {
+    await XliconBotInc.sendMessage(m.chat, {
+      text: 'Please provide a YouTube link to convert.',
+      footer: 'Example: .ytmp3 https://www.youtube.com/watch?v=example'
+    }, { quoted: m });
+    return;
+  }
+
+  const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/;
+  if (!youtubeRegex.test(text)) {
+    await XliconBotInc.sendMessage(m.chat, { text: '❌ Please provide a valid YouTube link.' }, { quoted: m });
+    return;
+  }
+
+  // Ask user to select quality for MP3
+  const button = [{
+    name: 'single_select',
+    buttonParamsJson: {
+      title: `Select Quality for MP3`,
+      sections: [{
+        title: 'MP3 QUALITY OPTIONS',
+        rows: [
+          { title: 'Low (64kbps)', description: 'Low quality MP3', id: `${prefix}ytmp3_quality low ${text}` },
+          { title: 'Medium (192kbps)', description: 'Medium quality MP3', id: `${prefix}ytmp3_quality medium ${text}` },
+          { title: 'High (320kbps)', description: 'High quality MP3', id: `${prefix}ytmp3_quality high ${text}` }
+        ]
+      }]
+    }
+  }];
+
+  // Send the button to user
+  await XliconBotInc.sendButtonMsg(m.chat, '*Please select the MP3 quality:*', null, '*Choose one:*', null, button, m);
+}
+break;
+
+case 'ytmp3_quality': {
+  const commandArgs = text.split(' '); // Split the command text into arguments
+  const quality = commandArgs[0]; // 'low', 'medium', 'high'
+  const youtubeUrl = commandArgs[1]; // YouTube link
+
+  try {
+    const headers = {
+      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      'Referer': 'https://tomp3.cc/en96j3f',
+      'Origin': 'https://tomp3.cc',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
+    };
+
+    // Fetch video information
+    const { data: { vid, links } } = await axios.post(
+      'https://tomp3.cc/api/ajax/search?hl=en',
+      new URLSearchParams({ query: youtubeUrl, vt: 'mp3' }),
+      { headers }
+    );
+
+    const qualityMap = { low: '64', medium: '192', high: '320' };
+    const { k } = links.mp3[qualityMap[quality]];
+
+    // Convert media
+    const { data } = await axios.post(
+      'https://tomp3.cc/api/ajax/convert?hl=en',
+      new URLSearchParams({ vid, k }),
+      { headers }
+    );
+
+    if (!data || !data.dlink) {
+      await XliconBotInc.sendMessage(m.chat, { text: '❌ Failed to retrieve MP3. Please try again.' }, { quoted: m });
+      return;
+    }
+
+    const mp3Buffer = await fetchBuffer(data.dlink);
+    await XliconBotInc.sendMessage(m.chat, {
+      audio: mp3Buffer,
+      mimetype: 'audio/mp4',
+      fileName: `${data.title}.mp3`,
+    });
+
+  } catch (err) {
+    console.error('Error processing ytmp3_quality command:', err.message);
+    await XliconBotInc.sendMessage(m.chat, { text: '❌ An error occurred while processing the request. Please try again later.' }, { quoted: m });
+  }
+}
+break;
+
+case 'ytmp4': {
+  if (!text) {
+    await XliconBotInc.sendMessage(m.chat, {
+      text: 'Please provide a YouTube link to convert.',
+      footer: 'Example: .ytmp4 https://www.youtube.com/watch?v=example'
+    }, { quoted: m });
+    return;
+  }
+
+  const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/;
+  if (!youtubeRegex.test(text)) {
+    await XliconBotInc.sendMessage(m.chat, { text: '❌ Please provide a valid YouTube link.' }, { quoted: m });
+    return;
+  }
+
+  // Ask user to select quality for MP4
+  const button = [{
+    name: 'single_select',
+    buttonParamsJson: {
+      title: `Select Quality for MP4`,
+      sections: [{
+        title: 'MP4 QUALITY OPTIONS',
+        rows: [
+          { title: 'Low (360p)', description: 'Low quality MP4', id: `${prefix}ytmp4_quality low ${text}` },
+          { title: 'Medium (480p)', description: 'Medium quality MP4', id: `${prefix}ytmp4_quality medium ${text}` },
+          { title: 'High (720p)', description: 'High quality MP4', id: `${prefix}ytmp4_quality high ${text}` }
+        ]
+      }]
+    }
+  }];
+
+  // Send the button to user
+  await XliconBotInc.sendButtonMsg(m.chat, '*Please select the MP4 quality:*', null, '*Choose one:*', null, button, m);
+}
+break;
+
+case 'ytmp4_quality': {
+  // Define commandArgs by splitting the command text
+  const commandArgs = text.split(' '); // Assuming 'text' contains the command arguments
+
+  const quality = commandArgs[0]; // 'low', 'medium', 'high'
+  const youtubeUrl = commandArgs[1]; // YouTube link
+
+  try {
+    const headers = {
+      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      'Referer': 'https://tomp3.cc/en96j3f',
+      'Origin': 'https://tomp3.cc',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
+    };
+
+    // Fetch video information
+    const { data: { vid, links } } = await axios.post(
+      'https://tomp3.cc/api/ajax/search?hl=en',
+      new URLSearchParams({ query: youtubeUrl, vt: 'mp4' }),
+      { headers }
+    );
+
+    const qualityMap = { low: '133', medium: '135', high: '136' };
+    const { k } = links.mp4[qualityMap[quality]];
+
+    // Convert media
+    const { data } = await axios.post(
+      'https://tomp3.cc/api/ajax/convert?hl=en',
+      new URLSearchParams({ vid, k }),
+      { headers }
+    );
+
+    if (!data || !data.dlink) {
+      await XliconBotInc.sendMessage(m.chat, { text: '❌ Failed to retrieve MP4. Please try again.' }, { quoted: m });
+      return;
+    }
+
+    const videoUrl = data.dlink;
+    const caption = `
+      📹 *YouTube Video Downloaded*
+      
+      📂 Title: ${data.title}
+      📅 Duration: ${data.duration}
+      
+      🔗 Download Link: ${videoUrl}
+    `;
+
+    // Send message with video attachment
+    let msgs = generateWAMessageFromContent(m.chat, {
+      viewOnceMessage: {
+        message: {
+          "messageContextInfo": {
+            "deviceListMetadata": {},
+            "deviceListMetadataVersion": 2
+          },
+          interactiveMessage: proto.Message.InteractiveMessage.create({
+            body: proto.Message.InteractiveMessage.Body.create({
+              text: caption
+            }),
+            footer: proto.Message.InteractiveMessage.Footer.create({
+              text: botname
+            }),
+            header: proto.Message.InteractiveMessage.Header.create({
+              hasMediaAttachment: true,
+              ...await prepareWAMessageMedia({ video: { url: videoUrl }}, { upload: XliconBotInc.waUploadToServer })
+            }),
+            nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+              buttons: [{
+                "name": "quick_reply",
+                "buttonParamsJson": `{\"display_text\":\"🔄 Refresh\",\"id\":\"\"}`
+              }],
+            }),
+            contextInfo: {
+              mentionedJid: [m.sender], 
+              forwardingScore: 999,
+              isForwarded: true,
+              forwardedNewsletterMessageInfo: {
+                newsletterJid: '120363232303807350@newsletter',
+                newsletterName: ownername,
+                serverMessageId: 143
+              }
+            }
+          })
+        }
+      }
+    }, { quoted: m });
+
+    await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+  } catch (err) {
+    console.error('Error processing ytmp4_quality command:', err.message);
+    await XliconBotInc.sendMessage(m.chat, { text: '❌ An error occurred while processing the request. Please try again later.' }, { quoted: m });
+  }
+}
+break;
 
       case 'apk': {
   try {
@@ -19073,9 +19450,87 @@ case 'ytmp3': case 'ytaudio': case 'ytplayaudio': {
   }
 }
 break;
-  
-      
-      
+
+
+case 'modwa': {
+  if (!isPremium) return replyprem(mess.premium)
+  try {
+    // Fetch mod data from the API
+    let apiUrl = `${global.api}downloader/wamod?apikey=${global.id}`;
+    let response = await fetch(apiUrl);
+    let data = await response.json();
+
+    if (data.status !== 200) {
+      return replygcxlicon(`*[❗] No results found for the mod name you provided.*`);
+    }
+
+    // Generate buttons for each mod
+    const button = [{
+      name: 'single_select',
+      buttonParamsJson: {
+        title: 'SELECT 🌹',
+        sections: [{
+          title: 'WHATSAPP MODS',
+          rows: [
+            { title: 'GBWhatsApp', description: 'Download GBWhatsApp', id: `${prefix}modwa_select gbwa` },
+            { title: 'WhatsApp Plus', description: 'Download WhatsApp Plus', id: `${prefix}modwa_select waplus` },
+            { title: 'OGWhatsApp', description: 'Download OGWhatsApp', id: `${prefix}modwa_select ogwa` },
+            { title: 'ANWhatsApp', description: 'Download ANWhatsApp', id: `${prefix}modwa_select anwa` },
+            { title: 'FMWhatsApp', description: 'Download FMWhatsApp', id: `${prefix}modwa_select fmwa` },
+            { title: 'YoWhatsApp', description: 'Download YoWhatsApp', id: `${prefix}modwa_select yowa` },
+            { title: 'WhatsAero', description: 'Download WhatsAero', id: `${prefix}modwa_select aerowa` },
+            { title: 'WhatsApp Gold', description: 'Download WhatsApp Gold', id: `${prefix}modwa_select goldwa` },
+            { title: 'Karina WhatsApp', description: 'Download Karina WhatsApp', id: `${prefix}modwa_select karinawa` }
+          ]
+        }]
+      }
+    }];
+
+    // Send the buttons to the user
+    await XliconBotInc.sendButtonMsg(m.chat, 'Please select the WhatsApp mod you want to download:', null, 'Choose one:', null, button, m);
+  } catch (error) {
+    console.error(error);
+    return replygcxlicon(`*[❗] An error occurred. Please try again later.*`);
+  }
+}
+break;
+
+case 'modwa_select': {
+  try {
+    const modName = text.split(' ')[0]; // Extract the mod name from the command
+    const modData = {
+      gbwa: "https://download2444.mediafire.com/bav6mdrs41vg0s3MIHTKMTYlvAaSRpBCCbGHAQ-c-hjQplzKcqBNHV-mcPSk2IY3IZUvjwRQBqkdrNqJmf5fBuVy9H9-9haNKGWqmeDhAbAzXmn5eqH1kX8m3L_4N19o7UvWOoyjkl0vpVzcDPvQK_PnNYpJw6GM7bn_1150zMYyhaeO/hs2h2jcqw393qvd/GBWhatsApp_Pro_v17.76.apk",
+      waplus: "https://download2435.mediafire.com/su3jsxy7lmigblThAiSt7XKA1VJLbh07Q80SmNkfbtP9Blt0siFMCv3fUVKMips_HyaeULLIfC2G8BGY6fxL4g8XW8sXJOQMsb-qpPwB9mYWYS_A3DmljSWK6fsNlI6VA2Pt83_F56GY42n_uDqMFFE6jElziSvgwCxZM72-1VWItfVN/lb5m60dlj1gm03t/WhatsApp_Plus_v17.76.apk",
+      ogwa: "https://download2448.mediafire.com/fyip44tzdyogy3Ra0iqGKDB0NQMTEMXCsYY8Kb6TjTKo8fAAyxJdBYCfWELO6vlkoVLkdKFmHrj7hD3aOll2jY0Lnez5LLz_4ypZLhqIfhT4Oa_HJ3KIq8QEWZwGAp6ZhMoKlD3jBpgK_Kvb_OuX_n1nnOluhMfiCLwXyG5tJDdiUqi7/v2n2xs6mw831yy2/OGWhatsApp_Pro_v17.76.apk",
+      anwa: "https://files.smart5hone.com/Downloads/AN_V37/redirects.php?forward=https://files.smart5hone.com/apk/anwa/ANWhatsApp_V37.apk",
+      fmwa: "https://cdn.fouadmod.com/apk/10.06/FMWA10.06@FouadMOD.com.apk",
+      yowa: "https://apk-download.co/V1006/WA10.06@FouadMODS.apk",
+      aerowa: "https://download.aeromods.app/AeroMods/WhatsAero/BETA/V9.93/H7dhs4/A_AERO_V9.93_BETA__--com_aero--__aeromods.app__.apk",
+      goldwa: "https://files.smart5hone.com/Downloads/Gold_V30/redirects.php?forward=https://files.smart5hone.com/apk/plus/WhatsApp_Gold-V30.apk",
+      karinawa: "https://eu2.contabostorage.com/ea5c648569af43439f47ab26502d20f5:butterfly/Karina-Official-Whatsapp-v14-(www.nulledandroid.com).apk"
+    };
+
+    const downloadLink = modData[modName];
+
+    if (!downloadLink) {
+      return replygcxlicon(`*[❗] Invalid mod name provided.*`);
+    }
+
+    // Send the mod download link
+    await XliconBotInc.sendMessage(
+      m.chat,
+      {
+        text: `*Mod Name:* ${modName}\n*Download Link:* ${downloadLink}`
+      },
+      { quoted: m }
+    );
+  } catch (error) {
+    console.error(error);
+    return replygcxlicon(`*[❗] An error occurred. Please try again later.*`);
+  }
+}
+break;
+
 case 'mega':{
 	try {
 if (!text) return replygcxlicon(`${prefix + command} https://mega.nz/file/ovJTHaQZ#yAbkrvQgykcH_NDKQ8eIc0zvsN7jonBbHZ_HTQL6lZ8`);
@@ -19419,6 +19874,7 @@ break
 			break
 			case 'mathquiz': case 'math': {
 				const { genMath, modes } = require('./lib/math');
+const axios = require('axios');
 				const inputMode = ['noob', 'easy', 'medium', 'hard','extreme','impossible','impossible2'];
 				if (!text) return replygcxlicon(`Mode: ${Object.keys(modes).join(' | ')}\nContoh penggunaan: ${prefix}math medium`)
 				if (!inputMode.includes(text.toLowerCase())) return replygcxlicon('Mode not found!')
@@ -19917,8 +20373,10 @@ let msg = generateWAMessageFromContent(m.chat, {
 await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, {
   messageId: msg.key.id
 })
+}  
 }
-}
+
+
 break
 case 'allmenu': {
 let xmenu_oh = `
@@ -20096,6 +20554,7 @@ let xmenu_oh = `
 │${setv} ${prefix}facebook 🅕
 │${setv} ${prefix}twitter 🅕
 │${setv} ${prefix}apk 🅕
+│${setv} ${prefix}modwa 🅕
 │${setv} ${prefix}bilibili 🅕
 │${setv} ${prefix}dailymotion 🅕
 │${setv} ${prefix}mega 🅕
@@ -20362,6 +20821,9 @@ let xmenu_oh = `
 ╰─┬────❍
 ╭─┴❍「 *Anime* 」❍
 │${setv} ${prefix}searchmenu 🅕
+│${setv} ${prefix}animeinfo (to get anime id) 🅕
+│${setv} ${prefix}animedl (downlaod anime by id) 🅕
+│${setv} ${prefix}searchmanga 🅕
 │${setv} ${prefix}stickhandhold 🅕
 │${setv} ${prefix}stickshinobu 🅕
 │${setv} ${prefix}stickcuddle 🅕
@@ -22181,6 +22643,7 @@ let xmenu_oh = `
 │${setv} ${prefix}bilibili 🅕
 │${setv} ${prefix}dailymotion 🅕
 │${setv} ${prefix}apk 🅕
+│${setv} ${prefix}modwa 🅕
 │${setv} ${prefix}mega 🅕
 │${setv} ${prefix}mediafire 🅕
 │${setv} ${prefix}google 🅕
@@ -26045,6 +26508,9 @@ let xmenu_oh = `
 ╰─┬────❍
 ╭─┴❍「 *Anime* 」❍
 │${setv} ${prefix}searchamime 🅕
+│${setv} ${prefix}animeinfo (to get anime id) 🅕
+│${setv} ${prefix}animedl (downlaod anime by id) 🅕
+│${setv} ${prefix}searchmanga 🅕
 │${setv} ${prefix}stickhandhold 🅕
 │${setv} ${prefix}stickshinobu 🅕
 │${setv} ${prefix}stickcuddle 🅕

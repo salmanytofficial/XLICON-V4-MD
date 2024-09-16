@@ -20049,9 +20049,6 @@ case 'ytmp3_quality': {
   const youtubeUrl = commandArgs[1]; // YouTube link
 
   try {
-    // Notify user that the processing is underway
-    await XliconBotInc.sendMessage(m.chat, { text: '⏳ Processing your request. Please wait...' }, { quoted: m });
-
     const headers = {
       'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
       'Referer': 'https://tomp3.cc/en96j3f',
@@ -20059,58 +20056,38 @@ case 'ytmp3_quality': {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
     };
 
-    // Set a timeout for the API request
-    const timeout = 30000; // 30 seconds
-    const fetchWithTimeout = (url, options) => {
-      return Promise.race([
-        axios.post(url, options),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Request timed out')), timeout)
-        )
-      ]);
-    };
-
     // Fetch video information
-    const response = await fetchWithTimeout(
+    const { data: { vid, links } } = await axios.post(
       'https://tomp3.cc/api/ajax/search?hl=en',
-      {
-        data: new URLSearchParams({ query: youtubeUrl, vt: 'mp3' }),
-        headers
-      }
+      new URLSearchParams({ query: youtubeUrl, vt: 'mp3' }),
+      { headers }
     );
 
-    console.log('API Response:', response.data); // Log the full API response
-
-    const { vid, links } = response.data;
     const qualityMap = { low: '64', medium: '192', high: '320' };
     const { k } = links.mp3[qualityMap[quality]];
 
     // Convert media
-    const convertResponse = await fetchWithTimeout(
+    const { data } = await axios.post(
       'https://tomp3.cc/api/ajax/convert?hl=en',
-      {
-        data: new URLSearchParams({ vid, k }),
-        headers
-      }
+      new URLSearchParams({ vid, k }),
+      { headers }
     );
 
-    console.log('Conversion Response:', convertResponse.data); // Log the conversion response
-
-    if (!convertResponse.data || !convertResponse.data.dlink) {
+    if (!data || !data.dlink) {
       await XliconBotInc.sendMessage(m.chat, { text: '❌ Failed to retrieve MP3. Please try again.' }, { quoted: m });
       return;
     }
 
-    const mp3Buffer = await fetchBuffer(convertResponse.data.dlink);
+    const mp3Buffer = await fetchBuffer(data.dlink);
     await XliconBotInc.sendMessage(m.chat, {
       audio: mp3Buffer,
       mimetype: 'audio/mp4',
-      fileName: `${convertResponse.data.title}.mp3`,
+      fileName: `${data.title}.mp3`,
     });
 
   } catch (err) {
     console.error('Error processing ytmp3_quality command:', err.message);
-    await XliconBotInc.sendMessage(m.chat, { text: `❌ An error occurred: ${err.message}. Please try again later.` }, { quoted: m });
+    await XliconBotInc.sendMessage(m.chat, { text: '❌ An error occurred while processing the request. Please try again later.' }, { quoted: m });
   }
 }
 break;
@@ -20152,14 +20129,13 @@ case 'ytmp4': {
 break;
 
 case 'ytmp4_quality': {
-  const commandArgs = text.split(' '); // Split the command text into arguments
+  // Define commandArgs by splitting the command text
+  const commandArgs = text.split(' '); // Assuming 'text' contains the command arguments
+
   const quality = commandArgs[0]; // 'low', 'medium', 'high'
   const youtubeUrl = commandArgs[1]; // YouTube link
 
   try {
-    // Notify user that the processing is underway
-    await XliconBotInc.sendMessage(m.chat, { text: '⏳ Processing your request. Please wait...' }, { quoted: m });
-
     const headers = {
       'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
       'Referer': 'https://tomp3.cc/en96j3f',
@@ -20167,56 +20143,35 @@ case 'ytmp4_quality': {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
     };
 
-    // Set a timeout for the API request
-    const timeout = 30000; // 30 seconds
-    const fetchWithTimeout = (url, options) => {
-      return Promise.race([
-        axios.post(url, options),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Request timed out')), timeout)
-        )
-      ]);
-    };
-
     // Fetch video information
-    const response = await fetchWithTimeout(
+    const { data: { vid, links } } = await axios.post(
       'https://tomp3.cc/api/ajax/search?hl=en',
-      {
-        data: new URLSearchParams({ query: youtubeUrl, vt: 'mp4' }),
-        headers
-      }
+      new URLSearchParams({ query: youtubeUrl, vt: 'mp4' }),
+      { headers }
     );
 
-    console.log('API Response:', response.data); // Log the full API response
-
-    const { vid, links } = response.data;
     const qualityMap = { low: '133', medium: '135', high: '136' };
     const { k } = links.mp4[qualityMap[quality]];
 
     // Convert media
-    const convertResponse = await fetchWithTimeout(
+    const { data } = await axios.post(
       'https://tomp3.cc/api/ajax/convert?hl=en',
-      {
-        data: new URLSearchParams({ vid, k }),
-        headers
-      }
+      new URLSearchParams({ vid, k }),
+      { headers }
     );
 
-    console.log('Conversion Response:', convertResponse.data); // Log the conversion response
-
-    if (!convertResponse.data || !convertResponse.data.dlink) {
+    if (!data || !data.dlink) {
       await XliconBotInc.sendMessage(m.chat, { text: '❌ Failed to retrieve MP4. Please try again.' }, { quoted: m });
       return;
     }
 
-    const videoUrl = convertResponse.data.dlink;
+    const videoUrl = data.dlink;
     const caption = `
-      📹 *YouTube Video Downloaded*
-
-      📂 Title: ${convertResponse.data.title}
-      📅 Duration: ${convertResponse.data.duration}
-
-      🔗 Download Link: ${videoUrl}
+📹 *YouTube Video Downloaded*
+      
+📂 Title: ${data.title}
+📅 Duration: ${data.duration}
+           
     `;
 
     // Send message with video attachment
@@ -20245,7 +20200,7 @@ case 'ytmp4_quality': {
               }],
             }),
             contextInfo: {
-              mentionedJid: [m.sender],
+              mentionedJid: [m.sender], 
               forwardingScore: 999,
               isForwarded: true,
               forwardedNewsletterMessageInfo: {
@@ -20262,11 +20217,12 @@ case 'ytmp4_quality': {
     await XliconBotInc.relayMessage(m.chat, msgs.message, {});
   } catch (err) {
     console.error('Error processing ytmp4_quality command:', err.message);
-    await XliconBotInc.sendMessage(m.chat, { text: `❌ An error occurred: ${err.message}. Please try again later.` }, { quoted: m });
+    await XliconBotInc.sendMessage(m.chat, { text: '❌ An error occurred while processing the request. Please try again later.' }, { quoted: m });
   }
 }
 break;
 
+				
       case 'apk': {
   try {
     if (command === 'apk') {

@@ -13748,6 +13748,58 @@ let regex1 = /(?:https|git)(?::\/\/|@)github\.com[\/:]([^\/:]+)\/(.+)/i
     XliconBotInc.sendMessage(m.chat, { document: { url: url }, fileName: filename+'.zip', mimetype: 'application/zip' }, { quoted: m }).catch((err) => replygcxlicon(mess.error))
 break
 
+case 'spotify': {
+  if (!text) return replygcxlicon(`*Where is the Song Name?*\n_Example :_\n${prefix}${command} Metamorphosis`)
+
+  try {
+    // Fetch Spotify search results
+    let api = await fetchJson(`https://api.junn4.my.id/search/spotify?query=${text}`);
+    
+    if (!api.data || api.data.length === 0) {
+      await XliconBotInc.sendMessage(m.chat, '❌ No results found on Spotify. Please try again with a different query.', { quoted: m });
+      return;
+    }
+
+    // Prepare the response message with song information
+    const songInfo = `*🎶 S P O T I F Y - D L 🎶*
+
+• 🎵 *Title*: ${api.data[0].title}
+• ⏱️ *Duration*: ${api.data[0].duration}
+• ⭐ *Popularity*: ${api.data[0].popularity}
+• 🔗 *Url*: ${api.data[0].url}`;
+
+    // Send the song info to the user
+    await XliconBotInc.sendMessage(m.chat, { text: songInfo }, { quoted: m });
+
+    // Fetch the Spotify song download link
+    let spodl = await fetchJson(`https://api.junn4.my.id/download/spotify?url=${api.data[0].url}`);
+    const spoDl = spodl.data.download;
+
+    // Send the Spotify song as an audio message with additional context (external ad reply)
+    await XliconBotInc.sendMessage(m.chat, {
+      audio: { url: spoDl },
+      mimetype: 'audio/mpeg',
+      contextInfo: {
+        externalAdReply: {
+          title: `🎵 - sᴘᴏᴛɪғʏ -`,
+          body: api.data[0].title,
+          thumbnailUrl: spodl.data.image, // Use the song's album image as thumbnail
+          sourceUrl: global.sourceurl || spodl.data.url, // URL to the source (you can customize this)
+          mediaType: 2,
+          showAdAttribution: true,
+          renderLargerThumbnail: true
+        }
+      }
+    }, { quoted: m });
+
+  } catch (error) {
+    console.error('Error fetching Spotify data:', error);
+    await XliconBotInc.sendMessage(m.chat, { text: '❌ An error occurred while fetching the Spotify data. Please try again later.' }, { quoted: m });
+  }
+}
+break;
+
+				
 
 case 'soundcloud': {
   if (!text) return replygcxlicon(`*Where is the Song Name?*\n_Example:_\n${prefix}${command} Metamorphosis`);
@@ -19599,6 +19651,8 @@ case 'ytvideo': {
   }
 }
 break;
+
+				
                 
 
 
@@ -21416,6 +21470,7 @@ let xmenu_oh = `
 │${setv} ${prefix}igvideo 🅕
 │${setv} ${prefix}igimage 🅕
 │${setv} ${prefix}facebook 🅕
+│${setv} ${prefix}facebook2 🅕
 │${setv} ${prefix}twitter 🅕
 │${setv} ${prefix}apk 🅕
 │${setv} ${prefix}modwa 🅕
@@ -21423,10 +21478,13 @@ let xmenu_oh = `
 │${setv} ${prefix}dailymotion 🅕
 │${setv} ${prefix}mega 🅕
 │${setv} ${prefix}mediafire 🅕
+│${setv} ${prefix}mediafire2 🅕
+│${setv} ${prefix}searchsoundcloud 🅕
+│${setv} ${prefix}soundcloud 🅕
 │${setv} ${prefix}google 🅕
 │${setv} ${prefix}gimage 🅕
 │${setv} ${prefix}weather 🅕
-│${setv} ${prefix}spotify 🅟
+│${setv} ${prefix} 🅟
 │${setv} ${prefix}gitclone 🅕
 │${setv} ${prefix}happymod 🅕
 │${setv} ${prefix}gdrive 🅕
@@ -21567,6 +21625,8 @@ let xmenu_oh = `
 │${setv} ${prefix}mlstalk 🅕
 │${setv} ${prefix}npmstalk 🅕
 │${setv} ${prefix}ghstalk 🅕
+│${setv} ${prefix}telestalk 🅕
+│${setv} ${prefix}wachannelstalk 🅕
 ╰─┬────❍
 ╭─┴❍「 *OpenAI* 」❍
 │${setv} ${prefix}blackboxai 🅕
@@ -21585,6 +21645,8 @@ let xmenu_oh = `
 │${setv} ${prefix}3dmodel 🅕
 │${setv} ${prefix}photoleap 🅕
 │${setv} ${prefix}chatgpt 🅕
+│${setv} ${prefix}darky 🅕
+│${setv} ${prefix}bing 🅕
 │${setv} ${prefix}mathsai 🅕
 │${setv} ${prefix}openai 🅕
 │${setv} ${prefix}dalle 🅕
@@ -23503,6 +23565,7 @@ let xmenu_oh = `
 │${setv} ${prefix}igvideo 🅕
 │${setv} ${prefix}igimage 🅕
 │${setv} ${prefix}facebook 🅕
+│${setv} ${prefix}facebook2 🅕
 │${setv} ${prefix}twitter 🅕
 │${setv} ${prefix}bilibili 🅕
 │${setv} ${prefix}dailymotion 🅕
@@ -23510,10 +23573,13 @@ let xmenu_oh = `
 │${setv} ${prefix}modwa 🅕
 │${setv} ${prefix}mega 🅕
 │${setv} ${prefix}mediafire 🅕
+│${setv} ${prefix}mediafire2 🅕
+│${setv} ${prefix}searchsoundcloud 🅕
+│${setv} ${prefix}soundcloud 🅕
 │${setv} ${prefix}google 🅕
 │${setv} ${prefix}gimage 🅕
 │${setv} ${prefix}weather 🅕
-│${setv} ${prefix}spotify 🅟
+│${setv} ${prefix} 🅟
 │${setv} ${prefix}gitclone 🅕
 │${setv} ${prefix}happymod 🅕
 │${setv} ${prefix}gdrive 🅕
@@ -25454,6 +25520,8 @@ let xmenu_oh = `
 │${setv} ${prefix}mlstalk 🅕
 │${setv} ${prefix}npmstalk 🅕
 │${setv} ${prefix}ghstalk 🅕
+│${setv} ${prefix}telestalk 🅕
+│${setv} ${prefix}wachannelstalk 🅕
 ╰──────❍`
 if (typemenu === 'v1') {
                     XliconBotInc.sendMessage(m.chat, {
@@ -25832,6 +25900,8 @@ let xmenu_oh = `
 │${setv} ${prefix}3dmodel 🅕
 │${setv} ${prefix}photoleap 🅕
 │${setv} ${prefix}chatgpt4 🅕
+│${setv} ${prefix}darky 🅕
+│${setv} ${prefix}bing 🅕
 │${setv} ${prefix}mathsai 🅕
 │${setv} ${prefix}openai 🅕
 │${setv} ${prefix}dalle 🅕

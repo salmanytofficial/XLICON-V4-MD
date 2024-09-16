@@ -6842,91 +6842,9 @@ case 'dailymotion': {
 }
 break;
 
-
-case 'animevideo': {
-  await XliconStickWait();
-  
-  const text = m.text.split(' ')[1];
-  if (!text) {
-    return await XliconBotInc.sendMessage(m.chat, { text: "Enter your number\nExample: .animevideo 1" }, { quoted: m });
-  }
-
-  async function getAnimeVideo() {
-    try {
-      const response = await fetch("https://shortstatusvideos.com/anime-video-status-download/");
-      const html = await response.text();
-      const $ = cheerio.load(html);
-      const videoList = [];
-      
-      $("a.mks_button.mks_button_small.squared").each((index, element) => {
-        const videoUrl = $(element).attr("href");
-        const videoTitle = $(element).closest('p').prevAll('p').find("strong").text();
-        videoList.push({
-          'title': videoTitle,
-          'source': videoUrl
-        });
-      });
-
-      if (videoList.length === 0) throw new Error('No videos found');
-      const randomIndex = Math.floor(Math.random() * videoList.length);
-      return videoList[randomIndex];
-    } catch (error) {
-      console.error('Error in getAnimeVideo:', error);
-      throw new Error('Failed to fetch video');
-    }
-  }
-
-  async function getAnimeVideo2() {
-    try {
-      const response = await fetch("https://mobstatus.com/anime-whatsapp-status-video/");
-      const html = await response.text();
-      const $ = cheerio.load(html);
-      const videoList = [];
-      const videoTitle = $('strong').text();
-      
-      $("a.mb-button.mb-style-glass.mb-size-tiny.mb-corners-pill.mb-text-style-heavy").each((index, element) => {
-        const videoUrl = $(element).attr("href");
-        videoList.push({
-          'title': videoTitle,
-          'source': videoUrl
-        });
-      });
-
-      if (videoList.length === 0) throw new Error('No videos found');
-      const randomIndex = Math.floor(Math.random() * videoList.length);
-      return videoList[randomIndex];
-    } catch (error) {
-      console.error('Error in getAnimeVideo2:', error);
-      throw new Error('Failed to fetch video');
-    }
-  }
-
-  if (text === '1') {
-    try {
-      let video = await getAnimeVideo();
-      await XliconBotInc.sendMessage(m.chat, { video: { url: video.source }, caption: "Here is your video" }, { quoted: m });
-    } catch (error) {
-      console.error('Error handling text 1:', error);
-      await XliconBotInc.sendMessage(m.chat, { text: 'An error occurred while fetching video 1.' }, { quoted: m });
-    }
-  }
-  
-  if (text === '2') {
-    try {
-      let video = await getAnimeVideo2();
-      await XliconBotInc.sendMessage(m.chat, { video: { url: video.source }, caption: "Script video made by XLICON" }, { quoted: m });
-    } catch (error) {
-      console.error('Error handling text 2:', error);
-      await XliconBotInc.sendMessage(m.chat, { text: 'An error occurred while fetching video 2.' }, { quoted: m });
-    }
-  }
-  
-  break;
-}
-
-
-
-
+                
+                
+                
 case 'animeinfo': {
   if (!text) return replygcxlicon(`Which anime are you looking for?`);
 
@@ -7012,7 +6930,7 @@ _*Here is the result of ${animeName}*_\n\n${animetxt}`
   return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
 }
 break;
-
+               
 
 case 'sendanimeid': {
   if (!text) return replygcxlicon(`Please provide the anime name to fetch IDs.`);
@@ -7061,9 +6979,60 @@ case 'sendanimeid': {
 }
 break;
 
+                
+                
+                
+case 'searchmanga': {
+  const title = text.trim(); // Assuming 'text' contains the user's input for the manga title
+  if (!title) {
+    await XliconBotInc.sendMessage(m.chat, { text: 'Please provide a manga title to search for.' }, { quoted: m });
+    return;
+  }
 
+  const baseUrl = 'https://api.mangadex.org';
+  try {
+    const resp = await axios({
+      method: 'GET',
+      url: `${baseUrl}/manga`,
+      params: {
+        title: title
+      }
+    });
 
+    if (resp.data.data.length === 0) {
+      await XliconBotInc.sendMessage(m.chat, { text: 'No manga found with that title.' }, { quoted: m });
+      return;
+    }
 
+    const mangaIds = resp.data.data.map(manga => manga.id);
+    let statsMessage = 'Manga Statistics:\n';
+
+    for (const mangaID of mangaIds) {
+      const statsResp = await axios({
+        method: 'GET',
+        url: `${baseUrl}/statistics/manga/${mangaID}`
+      });
+
+      const { rating, follows } = statsResp.data.statistics[mangaID];
+      const coverUrl = `https://uploads.mangadex.org/covers/${mangaID}.png`;
+
+      statsMessage += `
+        Manga ID: ${mangaID}
+        Mean Rating: ${rating.average}
+        Bayesian Rating: ${rating.bayesian}
+        Follows: ${follows}
+        Cover Image: ${coverUrl}
+      `;
+    }
+
+    await XliconBotInc.sendMessage(m.chat, { text: statsMessage }, { quoted: m });
+  } catch (error) {
+    console.error('Error fetching manga:', error.message);
+    await XliconBotInc.sendMessage(m.chat, { text: 'An error occurred while searching for the manga. Please try again later.' }, { quoted: m });
+  }
+}
+break;
+                
 case 'animedl': {
   if (!isPremium) return replyprem(mess.premium);
   if (!text) return replygcxlicon(`Example: ${prefix + command} one-piece,1;low`);
@@ -7199,60 +7168,7 @@ case 'animedl': {
   }
 }
 break;   
-
-
-
-case 'mangasearch': {
-  const title = text.trim(); // Assuming 'text' contains the user's input for the manga title
-  if (!title) {
-    await XliconBotInc.sendMessage(m.chat, { text: 'Please provide a manga title to search for.' }, { quoted: m });
-    return;
-  }
-
-  const baseUrl = 'https://api.mangadex.org';
-  try {
-    const resp = await axios({
-      method: 'GET',
-      url: `${baseUrl}/manga`,
-      params: {
-        title: title
-      }
-    });
-
-    if (resp.data.data.length === 0) {
-      await XliconBotInc.sendMessage(m.chat, { text: 'No manga found with that title.' }, { quoted: m });
-      return;
-    }
-
-    const mangaIds = resp.data.data.map(manga => manga.id);
-    let statsMessage = 'Manga Statistics:\n';
-
-    for (const mangaID of mangaIds) {
-      const statsResp = await axios({
-        method: 'GET',
-        url: `${baseUrl}/statistics/manga/${mangaID}`
-      });
-
-      const { rating, follows } = statsResp.data.statistics[mangaID];
-      const coverUrl = `https://uploads.mangadex.org/covers/${mangaID}.png`;
-
-      statsMessage += `
-        Manga ID: ${mangaID}
-        Mean Rating: ${rating.average}
-        Bayesian Rating: ${rating.bayesian}
-        Follows: ${follows}
-        Cover Image: ${coverUrl}
-      `;
-    }
-
-    await XliconBotInc.sendMessage(m.chat, { text: statsMessage }, { quoted: m });
-  } catch (error) {
-    console.error('Error fetching manga:', error.message);
-    await XliconBotInc.sendMessage(m.chat, { text: 'An error occurred while searching for the manga. Please try again later.' }, { quoted: m });
-  }
-}
-break;
-
+                
 //--------------------------------------------------------------------------------------------//
 case 'searchanime': {
 if (!text) return replygcxlicon(`Which anime are you lookin for?`)
@@ -11452,6 +11368,124 @@ await XliconBotInc.relayMessage(m.chat, msgs.message, {})
 }
 }
     break
+                
+           
+ case 'darky': {
+  if (!text) return replygcxlicon(`*• Example:* ${prefix + command} write me a simple code of python`);
+
+  try {
+    // Fetch data from the API
+    let response = await (await fetch(`https://evlgpt.onrender.com/egpt?prompt=${encodeURIComponent(text)}`)).json();
+    
+    // Replace "GURU" with "XLICON" in the message
+    let message = response.message.replace(/GURUGPT V1/g, 'XLICON V4');
+    
+    // Generate and send the message
+    let msgs = generateWAMessageFromContent(m.chat, {
+      viewOnceMessage: {
+        message: {
+          "messageContextInfo": {
+            "deviceListMetadata": {},
+            "deviceListMetadataVersion": 2
+          },
+          interactiveMessage: proto.Message.InteractiveMessage.create({
+            body: proto.Message.InteractiveMessage.Body.create({
+              text: '> Xlicon\n\n' + message
+            }),
+            footer: proto.Message.InteractiveMessage.Footer.create({
+              text: botname
+            }),
+            header: proto.Message.InteractiveMessage.Header.create({
+              hasMediaAttachment: false,
+              ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg')}, { upload: XliconBotInc.waUploadToServer })
+            }),
+            nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+              buttons: [{
+                "name": "quick_reply",
+                "buttonParamsJson": `{\"display_text\":\"👀\",\"id\":\"\"}`
+              }],
+            }),
+            contextInfo: {
+              mentionedJid: [m.sender],
+              forwardingScore: 999,
+              isForwarded: true,
+              forwardedNewsletterMessageInfo: {
+                newsletterJid: '120363232303807350@newsletter',
+                newsletterName: ownername,
+                serverMessageId: 143
+              }
+            }
+          })
+        }
+      }
+    }, { quoted: m });
+
+    await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+  } catch(e) {
+    return replygcxlicon("`*Error*`");
+  }
+}
+break;
+
+case 'bing': {
+  if (!text) return replygcxlicon(`*• Example:* ${prefix + command} hello`);
+
+  try {
+    // Fetch data from the API
+    let apiUrl = `https://api.guruapi.tech/ai/bing?username=string&query=${encodeURIComponent(text)}`;
+    let response = await (await fetch(apiUrl)).json();
+    
+    // Replace "Guru sensei" with "Xlicon" in the response
+    let message = response.msg.replace(/Guru sensei/g, 'Xlicon');
+
+    // Generate and send the message
+    let msgs = generateWAMessageFromContent(m.chat, {
+      viewOnceMessage: {
+        message: {
+          "messageContextInfo": {
+            "deviceListMetadata": {},
+            "deviceListMetadataVersion": 2
+          },
+          interactiveMessage: proto.Message.InteractiveMessage.create({
+            body: proto.Message.InteractiveMessage.Body.create({
+              text: '> Xlicon\n\n' + message
+            }),
+            footer: proto.Message.InteractiveMessage.Footer.create({
+              text: botname
+            }),
+            header: proto.Message.InteractiveMessage.Header.create({
+              hasMediaAttachment: false,
+              ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg')}, { upload: XliconBotInc.waUploadToServer })
+            }),
+            nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+              buttons: [{
+                "name": "quick_reply",
+                "buttonParamsJson": `{\"display_text\":\"👀\",\"id\":\"\"}`
+              }],
+            }),
+            contextInfo: {
+              mentionedJid: [m.sender],
+              forwardingScore: 999,
+              isForwarded: true,
+              forwardedNewsletterMessageInfo: {
+                newsletterJid: '120363232303807350@newsletter',
+                newsletterName: ownername,
+                serverMessageId: 143
+              }
+            }
+          })
+        }
+      }
+    }, { quoted: m });
+
+    await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+  } catch(e) {
+    return replygcxlicon("`*Error*`");
+  }
+}
+break;
+
+               
 
     case 'mathsai': {
       if (!text) return replygcxlicon(`*• Example:* ${prefix + command} what is your name`);   
@@ -11796,7 +11830,7 @@ case 'matches':
 
     case 'sc': case 'script': case 'donate': case 'donate': case 'cekupdate': case 'updatebot': case 'cekbot': case 'sourcecode': {
 let me = m.sender
-let teks = `*「  ${global.botname} Script 」*\n\nYouTube: ${global.websitex}\nGitHub: ${global.botscript}\n\nHi @${me.split('@')[0]} 👋\nDont forget to donate yeah🍜 👇 https://i.ibb.co/y6XmZ2b/donate.png`
+let teks = `*「  ${global.botname} Script 」*\n\nYouTube: ${global.websitex}\nGitHub: ${global.botscript}\n\nHi @${me.split('@')[0]} 👋\nDont forget to donate yeah🍜 👇 https://i.ibb.co/SBXWb1R/donate.jpg`
 sendXliconBotIncMessage(m.chat, { 
 text: teks,
 mentions:[sender],
@@ -11914,6 +11948,7 @@ Publish Time : ${eha.publishTime}
 Latest Publish Time : ${eha.latestPublishTime}`)
 }
 break
+                
 case 'ffstalk':{
 if (!q) return replygcxlicon(`Example ${prefix+command} 946716486`)
 await XliconStickWait()
@@ -11937,23 +11972,126 @@ Id : ${q.split("|")[0]}
 ID Zone: ${q.split("|")[1]}`)
 }
 break
-			case 'tiktokstalk': {
-	  if (!text) return replygcxlicon(`Username? `)
-  let res = await fg.ttStalk(args[0])
-  let txt = `
-┌──「 *TIKTOK STALK* 
-──「 *TIKTOK STALK* 
-▢ *🔖Number:* ${res.name}
-▢ *🔖Username:* ${res.username}
-▢ *👥followers:* ${res.followers}
-▢ *🫂following:* ${res.following}
-▢ *📌Desc:* ${res.desc}
+case 'tiktokstalk': {
+  if (!text) return replygcxlicon(`Please provide a TikTok username.`);
 
-▢ *🔗 Link* : https://tiktok.com/${res.username}
-└────────────`
-  await XliconBotInc.sendMessage(m.chat, {image: { url: res.profile}, caption: txt}, {quoted: m})
+  const username = text;
+  const apiUrl = `${global.api}stalking/tiktok-user2?apikey=${global.id}&user=${username}`;
+  
+  try {
+    // Fetch TikTok user data
+    let res = await fetchJson(apiUrl);
+    
+    if (!res.status) {
+      await XliconBotInc.sendMessage(m.chat, { text: '❌ Unable to fetch data. Please try again later.' }, { quoted: m });
+      return;
+    }
+
+    const user = res.result;
+    let txt = `
+┌──「 *TIKTOK STALK* 」
+▢ *🔖 Name:* ${user.nickname}
+▢ *🔖 Username:* ${user.username}
+▢ *👥 Followers:* ${user.followerCount}
+▢ *🫂 Following:* ${user.followingCount}
+▢ *💖 Hearts:* ${user.heartCount}
+▢ *📌 Description:* ${user.signature || 'No description available.'}
+▢ *🔗 Link:* https://tiktok.com/${user.username}
+└────────────`;
+
+    // Send the message with user profile image
+    await XliconBotInc.sendMessage(m.chat, { image: { url: user.avatarLarger }, caption: txt }, { quoted: m });
+
+  } catch (error) {
+    console.error('Error fetching TikTok user data:', error.message);
+    await XliconBotInc.sendMessage(m.chat, { text: '❌ An error occurred while processing the request. Please try again later.' }, { quoted: m });
+  }
 }
-break
+break;
+
+case 'telestalk': {
+  if (!text) return replygcxlicon(`*Where is the Telegram Username?*\n_Example:_\n${prefix}${command} ahmmikun`);
+
+  try {
+    // Fetch Telegram user data using the provided API
+    const apiUrl = `${global.api}stalking/telegram-user?apikey=${global.id}&user=${encodeURIComponent(text)}`;
+    let api = await fetchJson(apiUrl);
+
+    // Log the API response for debugging
+    console.log('Telegram API Response:', api);
+
+    if (!api || api.status !== 200 || !api.result) {
+      console.error('API response is invalid or no results found:', api);
+      await XliconBotInc.sendMessage(m.chat, '❌ No results found on Telegram. Please try again with a different username.', { quoted: m });
+      return;
+    }
+
+    // Prepare the response message with user information
+    const userInfo = `*📱 T E L E G R A M - U S E R 📱*\n\n` +
+                     `• 👤 *Name*: ${api.result.name}\n` +
+                     `• 🆔 *Username*: ${api.result.username}\n` +
+                     `• 📜 *Bio*: ${api.result.bio}\n` +
+                     `• 🔗 *Profile Photo*: ${api.result.photo}`;
+
+    // Send the user info to the user
+    await XliconBotInc.sendMessage(m.chat, { text: userInfo }, { quoted: m });
+
+    // Send the Telegram user's profile photo
+    await XliconBotInc.sendMessage(m.chat, {
+      image: { url: api.result.photo },
+      caption: `*Profile Photo of ${api.result.name}*`
+    }, { quoted: m });
+
+  } catch (error) {
+    console.error('Error fetching Telegram data:', error.message);
+    await XliconBotInc.sendMessage(m.chat, { text: '❌ An error occurred while fetching the Telegram data. Please try again later.' }, { quoted: m });
+  }
+}
+break;
+
+
+case 'wachannelstalk': {
+  if (!text) return replygcxlicon(`*Where is the WhatsApp Channel URL?*\n_Example:_\n${prefix}${command} https://whatsapp.com/channel/0029VaGvk6XId7nHNGfiRs0m`);
+
+  try {
+    // Fetch WhatsApp channel data using the provided API
+    const apiUrl = `${global.api}stalking/whatsapp-channel?apikey=${global.id}&url=${encodeURIComponent(text)}`;
+    let api = await fetchJson(apiUrl);
+
+    // Log the API response for debugging
+    console.log('WhatsApp Channel API Response:', api);
+
+    if (!api || api.status !== 200 || !api.result) {
+      console.error('API response is invalid or no results found:', api);
+      await XliconBotInc.sendMessage(m.chat, '❌ No results found on WhatsApp Channel. Please try again with a different URL.', { quoted: m });
+      return;
+    }
+
+    // Prepare the response message with channel information
+    const channelInfo = `*🌐 W H A T S A P P - C H A N N E L 🌐*\n\n` +
+                        `• 🏷️ *Title*: ${api.result.title}\n` +
+                        `• 📜 *Description*: ${api.result.description}\n` +
+                        `• 👥 *Followers*: ${api.result.followers}\n` +
+                        `• 🔗 *Channel Link*: ${text}`;
+
+    // Send the channel info to the user
+    await XliconBotInc.sendMessage(m.chat, { text: channelInfo }, { quoted: m });
+
+    // Send the WhatsApp channel's image
+    await XliconBotInc.sendMessage(m.chat, {
+      image: { url: api.result.img },
+      caption: `*Channel Image for ${api.result.title}*`
+    }, { quoted: m });
+
+  } catch (error) {
+    console.error('Error fetching WhatsApp channel data:', error.message);
+    await XliconBotInc.sendMessage(m.chat, { text: '❌ An error occurred while fetching the WhatsApp channel data. Please try again later.' }, { quoted: m });
+  }
+}
+break;
+
+
+
 			case 'tiktokgirl':{
 await XliconStickWait()
 var asupan = JSON.parse(fs.readFileSync('./src/media/tiktokvids/tiktokgirl.json'))
@@ -12796,8 +12934,6 @@ XliconBotInc.sendImageAsSticker(m.chat, data.url, m, { packname: global.packname
 }
 break
 
-
-
 //------------------------------------------------------------------------------------------------//
 //Anime Cmds
 case 'anime': {
@@ -13613,43 +13749,66 @@ let regex1 = /(?:https|git)(?::\/\/|@)github\.com[\/:]([^\/:]+)\/(.+)/i
 break
 
 
-case 'spotify': {
-  if (!text) return replygcxlicon(`*Where is the Song Name?*\n_Example :_\n${prefix}${command} Metamorphosis`)
+case 'soundcloud': {
+  if (!text) return replygcxlicon(`*Where is the Song Name?*\n_Example:_\n${prefix}${command} Metamorphosis`);
 
   try {
-    // Fetch Spotify search results
-    let api = await fetchJson(`https://api.junn4.my.id/search/spotify?query=${text}`);
-    
-    if (!api.data || api.data.length === 0) {
-      await XliconBotInc.sendMessage(m.chat, '❌ No results found on Spotify. Please try again with a different query.', { quoted: m });
+    // Fetch SoundCloud search results using your API
+    const apiUrl = `${global.api}downloader/sound-cloud?apikey=${global.id}&url=${encodeURIComponent(text)}`;
+    let api = await fetchJson(apiUrl);
+
+    // Log the API response for debugging
+    console.log('SoundCloud API Response:', api);
+
+    if (!api || api.status !== 200 || !api.result) {
+      console.error('API response is invalid or no results found:', api);
+      await XliconBotInc.sendMessage(m.chat, '❌ No results found on SoundCloud. Please try again with a different query.', { quoted: m });
       return;
     }
 
     // Prepare the response message with song information
-    const songInfo = `*🎶 S P O T I F Y - D L 🎶*
-
-• 🎵 *Title*: ${api.data[0].title}
-• ⏱️ *Duration*: ${api.data[0].duration}
-• ⭐ *Popularity*: ${api.data[0].popularity}
-• 🔗 *Url*: ${api.data[0].url}`;
+    const songInfo = `*🎵 S O U N D C L O U D 🎵*\n\n` +
+                     `• 🎵 *Title*: ${api.result.title}\n` +
+                     `• ⏱️ *Duration*: ${api.result.duration}\n` +
+                     `• 🎵 *Quality*: ${api.result.quality}\n` +
+                     `• 🔗 *Download Link*: [Click Here](${api.result.dl_url})`;
 
     // Send the song info to the user
     await XliconBotInc.sendMessage(m.chat, { text: songInfo }, { quoted: m });
 
-    // Fetch the Spotify song download link
-    let spodl = await fetchJson(`https://api.junn4.my.id/download/spotify?url=${api.data[0].url}`);
-    const spoDl = spodl.data.download;
+    // Check if the download URL exists and is valid
+    const downloadUrl = api.result.dl_url;
+    if (!downloadUrl || !downloadUrl.startsWith('https://')) {
+      console.error('Invalid download URL:', downloadUrl);
+      await XliconBotInc.sendMessage(m.chat, '❌ No download link found or URL is invalid. Please try again.', { quoted: m });
+      return;
+    }
 
-    // Send the Spotify song as an audio message with additional context (external ad reply)
+    // Log the download URL for debugging
+    console.log('Download URL:', downloadUrl);
+
+    // Fetch the audio file
+    const audioResponse = await fetch(downloadUrl);
+    if (!audioResponse.ok) {
+      throw new Error(`Failed to fetch audio. Status: ${audioResponse.status}`);
+    }
+
+    const audioBuffer = await audioResponse.buffer();
+    if (!audioBuffer || audioBuffer.length === 0) {
+      await XliconBotInc.sendMessage(m.chat, '❌ Failed to fetch audio. The file might be empty or inaccessible.', { quoted: m });
+      return;
+    }
+
+    // Send the SoundCloud song as an audio message with additional context (external ad reply)
     await XliconBotInc.sendMessage(m.chat, {
-      audio: { url: spoDl },
+      audio: { buffer: audioBuffer },
       mimetype: 'audio/mpeg',
       contextInfo: {
         externalAdReply: {
-          title: `🎵 - sᴘᴏᴛɪғʏ -`,
-          body: api.data[0].title,
-          thumbnailUrl: spodl.data.image, // Use the song's album image as thumbnail
-          sourceUrl: global.sourceurl || spodl.data.url, // URL to the source (you can customize this)
+          title: `🎵 - sᴏᴜɴᴅᴄʟᴏᴜᴅ -`,
+          body: api.result.title,
+          thumbnailUrl: api.result.thumb, // Use the song's thumbnail image
+          sourceUrl: downloadUrl, // URL to the download link
           mediaType: 2,
           showAdAttribution: true,
           renderLargerThumbnail: true
@@ -13658,32 +13817,103 @@ case 'spotify': {
     }, { quoted: m });
 
   } catch (error) {
-    console.error('Error fetching Spotify data:', error);
-    await XliconBotInc.sendMessage(m.chat, { text: '❌ An error occurred while fetching the Spotify data. Please try again later.' }, { quoted: m });
+    console.error('Error fetching SoundCloud data:', error.message);
+    await XliconBotInc.sendMessage(m.chat, { text: '❌ An error occurred while fetching the SoundCloud data. Please try again later.' }, { quoted: m });
   }
 }
 break;
 
+	case 'mediafire': {
+  if (!args[0]) return replygcxlicon(`Enter the MediaFire link next to the command`);
+  if (!args[0].match(/mediafire/gi)) return replygcxlicon(`Link incorrect`);
 
-			case 'mediafire': {
-  	if (!args[0]) return replygcxlicon(`Enter the mediafire link next to the command`)
-    if (!args[0].match(/mediafire/gi)) return replygcxlicon(`Link incorrect`)
-    const { mediafiredl } = require('@bochilteam/scraper')
-    let full = /f$/i.test(command)
-    let u = /https?:\/\//.test(args[0]) ? args[0] : 'https://' + args[0]
-    let res = await mediafiredl(args[0])
-    let { url, url2, filename, ext, aploud, filesize, filesizeH } = res
+  const { mediafiredl } = require('@bochilteam/scraper');
+  let full = /f$/i.test(command);
+  let u = /https?:\/\//.test(args[0]) ? args[0] : 'https://' + args[0];
+
+  // Notify the user that the download is starting
+  replygcxlicon(`⏳ *Downloading file, please wait...*`);
+
+  try {
+    let res = await mediafiredl(args[0]);
+    let { url, url2, filename, ext, aploud, filesize, filesizeH } = res;
+    
     let caption = `
    ≡ *MEDIAFIRE*
 
-▢ *Number:* ${filename}
-▢ *Size:* ${filesizeH}
-▢ *Extension:* ${ext}
-▢ *Uploaded:* ${aploud}
-`.trim()
-    XliconBotInc.sendMessage(m.chat, { document : { url : url}, fileName : filename, mimetype: ext }, { quoted : m })
+  ▢ *Filename:* ${filename}
+  ▢ *Size:* ${filesizeH}
+  ▢ *Extension:* ${ext}
+  ▢ *Uploaded:* ${aploud}
+  `.trim();
+
+    // Send the file to the chat
+    await XliconBotInc.sendMessage(m.chat, { document: { url: url }, fileName: filename, mimetype: ext }, { quoted: m });
+    
+    // Notify the user that the download is complete
+    return replygcxlicon(`✅ *Download complete!* 🎉\n\n${caption}`);
+  } catch (error) {
+    console.error(`Error during MediaFire download: ${error.message}`);
+    return replygcxlicon(`❌ *Failed to download the file. Please try again later.*`);
+  }
+}
+break;
+             
+   
+case 'mediafire2': {
+  if (!args[0]) return replygcxlicon(`Enter the MediaFire link next to the command`);
+  if (!args[0].match(/mediafire/gi)) return replygcxlicon(`Link incorrect`);
+
+  let apiUrls = [
+    `https://bk9.fun/download/mediafire?url=${encodeURIComponent(args[0])}`,
+    `https://bk9.fun/download/mediafire2?url=${encodeURIComponent(args[0])}`
+  ];
+
+  let api_response;
+
+  // Notify the user that the download is starting
+  replygcxlicon(`⏳ *Downloading file, please wait...*`);
+
+  for (let apiUrl of apiUrls) {
+    try {
+      let res = await fetch(apiUrl);
+      api_response = await res.json();
+
+      // Check if the response is valid and contains data
+      if (api_response && api_response.status) {
+        if (api_response.BK9) {
+          // Extract data from the API response
+          let { url, nama, mime, aploud, size } = api_response.BK9;
+          // Ensure filename is correctly extracted
+          const filename = nama || 'file';
+          const caption = `
+           ≡ *MEDIAFIRE*
+
+  ▢ *Filename:* ${filename}
+  ▢ *Size:* ${size}
+  ▢ *Extension:* ${mime}
+  ▢ *Uploaded:* ${aploud}
+  `.trim();
+
+          // Use MIME type for sending the file
+          await XliconBotInc.sendMessage(m.chat, { document: { url: url }, fileName: filename, mimetype: `application/${mime.toLowerCase()}` }, { quoted: m });
+          
+          // Notify the user that the download is complete
+          return replygcxlicon(`✅ *Download complete!* 🎉\n\n${caption}`);
+        }
+      }
+    } catch (error) {
+      console.error(`Error with API ${apiUrl}: ${error.message}`);
     }
-    break
+  }
+
+  return replygcxlicon(`❌ *Failed to fetch the file from the available APIs.*`);
+}
+break;
+              
+                
+       
+
 			case 'remini': {
 			if (!quoted) return replygcxlicon(`Where is the picture?`)
 			if (!/image/.test(mime)) return replygcxlicon(`Send/Reply Photos With Captions ${prefix + command}`)
@@ -13733,6 +13963,7 @@ _*Here is the result of: ${command}*_`
 return await XliconBotInc.relayMessage(m.chat, msgs.message, {})
 			}
 			break
+                
 			case 'imdb':
 if (!text) return replygcxlicon(`_Name a Series or movie`)
 await XliconStickWait()
@@ -19277,8 +19508,6 @@ await fs.unlinkSync(pl.path)
 }
 break
 
-
-
 //--------------------------------------------------------------------------------------------------//
 
                 
@@ -19321,65 +19550,214 @@ case 'song2': {
 }
 break;
 
-case "ytaudio": {
-  try {
-    const xliconaudp3 = require('./lib/ytdl2');
-    if (args.length < 1 || !isUrl(text) || !xliconaudp3.isYTUrl(text)) 
-      return replygcxlicon(`Where's the yt link?\nExample: ${prefix + command} https://youtube.com/shorts/YQf-vMjDuKY?feature=share`);
-
-    const audio = await xliconaudp3.mp3(text);
-
-    if (!audio || !audio.path) throw new Error("Failed to retrieve audio");
-
-    await XliconBotInc.sendMessage(m.chat, {
-      audio: fs.readFileSync(audio.path),
-      mimetype: 'audio/mp4', 
-      ptt: true,
-      contextInfo: {
-        externalAdReply: {
-          title: audio.meta.title,
-          body: botname,
-          thumbnail: await fetchBuffer(audio.meta.image),
-          mediaType: 2,
-          mediaUrl: text,
-        }
-      },
-    }, {quoted: m});
-
-    await fs.unlinkSync(audio.path);
-  } catch (error) {
-    console.error("Error in ytaudio command: ", error);
-    replygcxlicon("An error occurred while processing your request.");
-  }
-}
-break;
 
 case 'ytvideo': {
   try {
-    const xliconvidoh = require('./lib/ytdl2');
-    if (args.length < 1 || !isUrl(text) || !xliconvidoh.isYTUrl(text)) 
-      return replygcxlicon(`Where is the link??\n\nExample : ${prefix + command} https://youtube.com/watch?v=PtFMh6Tccag%27 128kbps`);
+    // Check if the user has provided a valid URL
+    if (args.length < 1 || !isUrl(text)) 
+      return replygcxlicon(`Where is the link??\n\nExample: ${prefix + command} https://youtube.com/watch?v=PtFMh6Tccag`);
 
-    const vid = await xliconvidoh.mp4(text);
+    // API URL to fetch video information
+    const apiUrl = `https://bk9.fun/download/youtube?url=${encodeURIComponent(text)}`;
+    
+    // Fetch the response from the API
+    let res = await fetch(apiUrl);
+    let apiResponse = await res.json();
+    
+    // Check if the API returned a valid response
+    if (!apiResponse.status || !apiResponse.BK9 || !apiResponse.BK9.video) 
+      throw new Error("Failed to retrieve video");
 
-    if (!vid || !vid.videoUrl) throw new Error("Failed to retrieve video");
+    // Extract video data from the API response
+    let { title, thumb, channel, published, views, url } = apiResponse.BK9.video;
 
+    // Build the caption with more details
     const ytc = `
-      *${themeemoji}Title:* ${vid.title}
-      *${themeemoji}Date:* ${vid.date}
-      *${themeemoji}Duration:* ${vid.duration}
-      *${themeemoji}Quality:* ${vid.quality}`;
+      *🎬 Title:* ${title}
+      *📅 Published:* ${published}
+      *🕒 Duration:*  -- (Duration info not provided by API)
+      *👀 Views:* ${views}
+      *📺 Channel:* ${channel}
+    `.trim();
 
+    // Notify the user that the download is starting
+    replygcxlicon("⏳ *Downloading video, please wait...*");
+
+    // Send the video along with the caption
     await XliconBotInc.sendMessage(m.chat, {
-      video: { url: vid.videoUrl },
+      video: { url: url },
       caption: ytc,
+      thumbnail: { url: thumb }
     }, { quoted: m });
+
+    // Notify that the download is complete
+    replygcxlicon(`✅ *Download complete!* 🎉\n\n${ytc}`);
+
   } catch (error) {
     console.error("Error in ytvideo command: ", error);
-    replygcxlicon("An error occurred while processing your request.");
+    replygcxlicon("❌ *An error occurred while processing your request. Please try again later.*");
   }
 }
 break;
+                
+
+
+case 'searchsoundcloud': {
+  if (!text) return replygcxlicon(`*• Example:* ${prefix + command} metamorphosis`);
+
+  const fetchSoundCloudResults = async (query) => {
+    const apiUrl = `https://bk9.fun/search/soundcloud?q=${encodeURIComponent(query)}`;
+
+    try {
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        console.error(`API response not OK: ${response.status} ${response.statusText}`);
+        throw new Error('API response not OK');
+      }
+      const json = await response.json();
+      if (json.status && json.BK9 && json.BK9.length > 0) {
+        return json.BK9; // Return results if found
+      } else {
+        console.error('No results found in API response');
+      }
+    } catch (error) {
+      console.error(`Error fetching from ${apiUrl}:`, error);
+    }
+    return null; // Return null if no results found
+  };
+
+  try {
+    await XliconStickWait();
+    const query = text.trim();
+    const results = await fetchSoundCloudResults(query);
+
+    if (!results) {
+      return replygcxlicon('❌ Failed to fetch SoundCloud results. Please try again.');
+    }
+
+    let soundCloudText = `🎵 *SoundCloud Results for* _"${query}"_:\n\n`;
+    results.forEach((track, index) => {
+      soundCloudText += `🔊 *Title:* ${track.title}\n🔗 *Link:* ${track.link}\n\n`;
+    });
+
+    let msgs = generateWAMessageFromContent(m.chat, {
+      viewOnceMessage: {
+        message: {
+          "messageContextInfo": {
+            "deviceListMetadata": {},
+            "deviceListMetadataVersion": 2
+          },
+          interactiveMessage: proto.Message.InteractiveMessage.create({
+            body: proto.Message.InteractiveMessage.Body.create({
+              text: '> SoundCloud Search Results\n\n' + soundCloudText
+            }),
+            footer: proto.Message.InteractiveMessage.Footer.create({
+              text: botname
+            }),
+            header: proto.Message.InteractiveMessage.Header.create({
+              hasMediaAttachment: false,
+              ...await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg')}, { upload: XliconBotInc.waUploadToServer })
+            }),
+            nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+              buttons: [{
+                "name": "quick_reply",
+                "buttonParamsJson": `{\"display_text\":\"🔍 Search More\",\"id\":\"${prefix}searchsoundcloud ${query}\"}`
+              }],
+            }),
+            contextInfo: {
+              mentionedJid: [m.sender],
+              forwardingScore: 999,
+              isForwarded: true,
+              forwardedNewsletterMessageInfo: {
+                newsletterJid: '120363232303807350@newsletter',
+                newsletterName: ownername,
+                serverMessageId: 143
+              }
+            }
+          })
+        }
+      }
+    }, { quoted: m });
+
+    await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+  } catch (e) {
+    return replygcxlicon("`*Error*`");
+  }
+}
+break;
+
+case 'soundcloud': {
+  if (!text) return replygcxlicon(`*Where is the Song Name?*\n_Example:_\n${prefix}${command} Metamorphosis`);
+
+  try {
+    // Construct the API URL with global variables
+    const apiUrl = `${global.api}downloader/sound-cloud?apikey=${global.id}&url=${encodeURIComponent(text)}`;
+    let api = await fetchJson(apiUrl);
+
+    // Log the API response for debugging
+    console.log('SoundCloud API Response:', api);
+
+    if (api.status !== 200 || !api.result) {
+      await XliconBotInc.sendMessage(m.chat, '❌ No results found on SoundCloud. Please try again with a different query.', { quoted: m });
+      return;
+    }
+
+    // Extract download URL
+    const downloadUrl = api.result.dl_url;
+    if (!downloadUrl) {
+      await XliconBotInc.sendMessage(m.chat, '❌ No download link found. Please try again.', { quoted: m });
+      return;
+    }
+
+    // Log the download URL for debugging
+    console.log('Download URL:', downloadUrl);
+
+    // Fetch the audio file
+    const audioResponse = await fetch(downloadUrl);
+    if (!audioResponse.ok) {
+      throw new Error(`Failed to fetch audio. Status: ${audioResponse.status}`);
+    }
+
+    const audioBuffer = await audioResponse.buffer();
+    if (!audioBuffer || audioBuffer.length === 0) {
+      await XliconBotInc.sendMessage(m.chat, '❌ Failed to fetch audio. The file might be empty or inaccessible.', { quoted: m });
+      return;
+    }
+
+    // Prepare and send the message with audio
+    const songInfo = `*🎵 S O U N D C L O U D 🎵*\n\n` +
+                     `• 🎵 *Title*: ${api.result.title}\n` +
+                     `• ⏱️ *Duration*: ${api.result.duration}\n` +
+                     `• 🎵 *Quality*: ${api.result.quality}\n` +
+                     `• 🔗 *Download Link*: [Click Here](${downloadUrl})`;
+
+    await XliconBotInc.sendMessage(m.chat, { text: songInfo }, { quoted: m });
+
+    await XliconBotInc.sendMessage(m.chat, {
+      audio: { buffer: audioBuffer },
+      mimetype: 'audio/mpeg',
+      contextInfo: {
+        externalAdReply: {
+          title: `🎵 - sᴏᴜɴᴅᴄʟᴏᴜᴅ -`,
+          body: api.result.title,
+          thumbnailUrl: api.result.thumb, // Use the song's thumbnail image
+          sourceUrl: downloadUrl, // URL to the download link
+          mediaType: 2,
+          showAdAttribution: true,
+          renderLargerThumbnail: true
+        }
+      }
+    }, { quoted: m });
+
+  } catch (error) {
+    console.error('Error fetching SoundCloud data:', error.message);
+    await XliconBotInc.sendMessage(m.chat, { text: '❌ An error occurred while fetching the SoundCloud data. Please try again later.' }, { quoted: m });
+  }
+}
+break;
+
+
+                
   
 
 //--------------------------------------------------------------------------------------------------//
@@ -19484,11 +19862,6 @@ break;
   });
 }
 break
-
-
-
-
-
 			case 'wallpaper': {
                 if (!text) return replygcxlicon('Enter Query Title')
                 await XliconStickWait()
@@ -19622,6 +19995,9 @@ case 'ytmp3_quality': {
   const youtubeUrl = commandArgs[1]; // YouTube link
 
   try {
+    // Notify user that the processing is underway
+    await XliconBotInc.sendMessage(m.chat, { text: '⏳ Processing your request. Please wait...' }, { quoted: m });
+
     const headers = {
       'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
       'Referer': 'https://tomp3.cc/en96j3f',
@@ -19629,38 +20005,58 @@ case 'ytmp3_quality': {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
     };
 
+    // Set a timeout for the API request
+    const timeout = 30000; // 30 seconds
+    const fetchWithTimeout = (url, options) => {
+      return Promise.race([
+        axios.post(url, options),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Request timed out')), timeout)
+        )
+      ]);
+    };
+
     // Fetch video information
-    const { data: { vid, links } } = await axios.post(
+    const response = await fetchWithTimeout(
       'https://tomp3.cc/api/ajax/search?hl=en',
-      new URLSearchParams({ query: youtubeUrl, vt: 'mp3' }),
-      { headers }
+      {
+        data: new URLSearchParams({ query: youtubeUrl, vt: 'mp3' }),
+        headers
+      }
     );
 
+    console.log('API Response:', response.data); // Log the full API response
+
+    const { vid, links } = response.data;
     const qualityMap = { low: '64', medium: '192', high: '320' };
     const { k } = links.mp3[qualityMap[quality]];
 
     // Convert media
-    const { data } = await axios.post(
+    const convertResponse = await fetchWithTimeout(
       'https://tomp3.cc/api/ajax/convert?hl=en',
-      new URLSearchParams({ vid, k }),
-      { headers }
+      {
+        data: new URLSearchParams({ vid, k }),
+        headers
+      }
     );
 
-    if (!data || !data.dlink) {
+    console.log('Conversion Response:', convertResponse.data); // Log the conversion response
+
+    if (!convertResponse.data || !convertResponse.data.dlink) {
       await XliconBotInc.sendMessage(m.chat, { text: '❌ Failed to retrieve MP3. Please try again.' }, { quoted: m });
       return;
     }
 
-    const mp3Buffer = await fetchBuffer(data.dlink);
+    const mp3Buffer = await fetchBuffer(convertResponse.data.dlink);
     await XliconBotInc.sendMessage(m.chat, {
       audio: mp3Buffer,
       mimetype: 'audio/mp4',
-      fileName: `${data.title}.mp3`,
+      fileName: `${convertResponse.data.title}.mp3`,
     });
 
   } catch (err) {
     console.error('Error processing ytmp3_quality command:', err.message);
-    await XliconBotInc.sendMessage(m.chat, { text: '❌ An error occurred while processing the request. Please try again later.' }, { quoted: m });
+    await XliconBotInc.sendMessage(m.chat, { text: `❌ An error occurred: ${err.message}. Please try again later.` }, { quoted: m });
   }
 }
 break;
@@ -19702,13 +20098,14 @@ case 'ytmp4': {
 break;
 
 case 'ytmp4_quality': {
-  // Define commandArgs by splitting the command text
-  const commandArgs = text.split(' '); // Assuming 'text' contains the command arguments
-
+  const commandArgs = text.split(' '); // Split the command text into arguments
   const quality = commandArgs[0]; // 'low', 'medium', 'high'
   const youtubeUrl = commandArgs[1]; // YouTube link
 
   try {
+    // Notify user that the processing is underway
+    await XliconBotInc.sendMessage(m.chat, { text: '⏳ Processing your request. Please wait...' }, { quoted: m });
+
     const headers = {
       'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
       'Referer': 'https://tomp3.cc/en96j3f',
@@ -19716,35 +20113,56 @@ case 'ytmp4_quality': {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
     };
 
+    // Set a timeout for the API request
+    const timeout = 30000; // 30 seconds
+    const fetchWithTimeout = (url, options) => {
+      return Promise.race([
+        axios.post(url, options),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Request timed out')), timeout)
+        )
+      ]);
+    };
+
     // Fetch video information
-    const { data: { vid, links } } = await axios.post(
+    const response = await fetchWithTimeout(
       'https://tomp3.cc/api/ajax/search?hl=en',
-      new URLSearchParams({ query: youtubeUrl, vt: 'mp4' }),
-      { headers }
+      {
+        data: new URLSearchParams({ query: youtubeUrl, vt: 'mp4' }),
+        headers
+      }
     );
 
+    console.log('API Response:', response.data); // Log the full API response
+
+    const { vid, links } = response.data;
     const qualityMap = { low: '133', medium: '135', high: '136' };
     const { k } = links.mp4[qualityMap[quality]];
 
     // Convert media
-    const { data } = await axios.post(
+    const convertResponse = await fetchWithTimeout(
       'https://tomp3.cc/api/ajax/convert?hl=en',
-      new URLSearchParams({ vid, k }),
-      { headers }
+      {
+        data: new URLSearchParams({ vid, k }),
+        headers
+      }
     );
 
-    if (!data || !data.dlink) {
+    console.log('Conversion Response:', convertResponse.data); // Log the conversion response
+
+    if (!convertResponse.data || !convertResponse.data.dlink) {
       await XliconBotInc.sendMessage(m.chat, { text: '❌ Failed to retrieve MP4. Please try again.' }, { quoted: m });
       return;
     }
 
-    const videoUrl = data.dlink;
+    const videoUrl = convertResponse.data.dlink;
     const caption = `
-📹 *YouTube Video Downloaded*
-      
-📂 Title: ${data.title}
-📅 Duration: ${data.duration}
-           
+      📹 *YouTube Video Downloaded*
+
+      📂 Title: ${convertResponse.data.title}
+      📅 Duration: ${convertResponse.data.duration}
+
+      🔗 Download Link: ${videoUrl}
     `;
 
     // Send message with video attachment
@@ -19773,7 +20191,7 @@ case 'ytmp4_quality': {
               }],
             }),
             contextInfo: {
-              mentionedJid: [m.sender], 
+              mentionedJid: [m.sender],
               forwardingScore: 999,
               isForwarded: true,
               forwardedNewsletterMessageInfo: {
@@ -19790,7 +20208,7 @@ case 'ytmp4_quality': {
     await XliconBotInc.relayMessage(m.chat, msgs.message, {});
   } catch (err) {
     console.error('Error processing ytmp4_quality command:', err.message);
-    await XliconBotInc.sendMessage(m.chat, { text: '❌ An error occurred while processing the request. Please try again later.' }, { quoted: m });
+    await XliconBotInc.sendMessage(m.chat, { text: `❌ An error occurred: ${err.message}. Please try again later.` }, { quoted: m });
   }
 }
 break;
@@ -19998,6 +20416,7 @@ await XliconBotInc.relayMessage(m.chat, msgs.message, {})
 	}
 }
 break
+                
 			case 'fb':
            case 'facebook':
 case 'facebookvid': {
@@ -20022,27 +20441,61 @@ ${themeemoji} Title: ${result.title}`;
   }
   }
   break
-			case 'instagram': case 'ig': case 'igvideo': case 'igimage': case 'igvid': case 'igimg': {
-	  if (!text) return replygcxlicon(`You need to give the URL of Any Instagram video, post, reel, image`)
-  let res
+                
+    
+case 'fb2':
+case 'facebook2':
+case 'facebookvid2': {
+  if (!text) return replygcxlicon(`Please provide the link to a Facebook video.\n\nEXAMPLE:\n*${prefix + command}* https://www.facebook.com/share/v/HVm2yjse1usgfF4T`);
+
+  let res;
   try {
-    res = await fetch(`https://www.guruapi.tech/api/igdlv1?url=${text}`)
+    // Fetch data from the Facebook video downloader API
+    res = await fetch(`https://bk9.fun/download/videodownloader?input=${encodeURIComponent(text)}`);
   } catch (error) {
-    return replygcxlicon(`An error occurred: ${error.message}`)
+    return replygcxlicon(`An error occurred: ${error.message}`);
   }
-  let api_response = await res.json()
-  if (!api_response || !api_response.data) {
-    return replygcxlicon(`No video or image found or Invalid response from API.`)
+
+  let api_response = await res.json();
+  if (!api_response || !api_response.status || !api_response.video || !api_response.video.videoInfo || api_response.video.videoInfo.length === 0) {
+    return replygcxlicon(`No video found or invalid response from API.`);
   }
-  const mediaArray = api_response.data;
-  for (const mediaData of mediaArray) {
-    const mediaType = mediaData.type
-    const mediaURL = mediaData.url_download
-    let cap = `HERE IS THE ${mediaType.toUpperCase()}`
-    if (mediaType === 'video') {
-    	let msgs = generateWAMessageFromContent(m.chat, {
-  viewOnceMessage: {
-    message: {
+
+  // Filter for HD quality video first
+  let media = api_response.video.videoInfo.find(video => video.quality.toLowerCase().includes('hd'));
+
+  // If no HD video is found, fall back to SD quality
+  if (!media) {
+    media = api_response.video.videoInfo.find(video => video.quality.toLowerCase().includes('sd'));
+  }
+
+  // If neither HD nor SD video is found, send an error
+  if (!media) {
+    return replygcxlicon(`No HD or SD video found in the provided link.`);
+  }
+
+  const mediaURL = media.downloadLink;
+  const videoInfo = api_response.video.info;
+  const videoDuration = api_response.video.duration;
+  const videoQuality = media.quality;
+  const videoFormat = media.format;
+
+  // Stylized caption with emojis, bold, and detailed info
+  const cap = `
+🎥 *Facebook Video Downloaded* 🎥
+
+📺 *Video Info*: ${videoInfo}
+⏳ *Duration*: ${videoDuration}
+📹 *Quality*: ${videoQuality}
+💾 *Format*: ${videoFormat}
+
+👇 *Download and enjoy!* 👇
+`.trim();
+
+  // Send the video (HD or SD) as a message
+  let msgs = generateWAMessageFromContent(m.chat, {
+    viewOnceMessage: {
+      message: {
         "messageContextInfo": {
           "deviceListMetadata": {},
           "deviceListMetadataVersion": 2
@@ -20055,34 +20508,59 @@ ${themeemoji} Title: ${result.title}`;
             text: botname
           }),
           header: proto.Message.InteractiveMessage.Header.create({
-          hasMediaAttachment: false,
-          ...await prepareWAMessageMedia({ video: {url: mediaURL}}, { upload: XliconBotInc.waUploadToServer })
+            hasMediaAttachment: false,
+            ...await prepareWAMessageMedia({ video: { url: mediaURL } }, { upload: XliconBotInc.waUploadToServer })
           }),
           nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
             buttons: [{
-            "name": "quick_reply",
-              "buttonParamsJson": `{\"display_text\":\"Nice ✨\",\"id\":\""}`
+              "name": "quick_reply",
+              "buttonParamsJson": `{\"display_text\":\"👍 Nice\",\"id\":\"\"}`
             }],
           }), 
           contextInfo: {
-                  mentionedJid: [m.sender], 
-                  forwardingScore: 999,
-                  isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                  newsletterJid: '120363232303807350@newsletter',
-                  newsletterName: ownername,
-                  serverMessageId: 143
-                }
-                }
-       })
+            mentionedJid: [m.sender],
+            forwardingScore: 999,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363232303807350@newsletter',
+              newsletterName: ownername,
+              serverMessageId: 143
+            }
+          }
+        })
+      }
     }
+  }, { quoted: m });
+
+  return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+}
+break;
+                
+                
+                
+                
+case 'instagram': case 'ig': case 'igvideo': case 'igvid': {
+  if (!text) return replygcxlicon(`You need to give the URL of an Instagram video, post, reel, or image`);
+
+  let res;
+  try {
+    res = await fetch(`https://bk9.fun/download/instagram2?url=${encodeURIComponent(text)}`);
+  } catch (error) {
+    return replygcxlicon(`An error occurred: ${error.message}`);
   }
-}, { quoted: m })
-return await XliconBotInc.relayMessage(m.chat, msgs.message, {})
-    } else if (mediaType === 'image') {
-    	let msgs = generateWAMessageFromContent(m.chat, {
-  viewOnceMessage: {
-    message: {
+
+  let api_response = await res.json();
+  if (!api_response || !api_response.status || !api_response.BK9 || api_response.BK9.length === 0) {
+    return replygcxlicon(`No video found or invalid response from API.`);
+  }
+
+  const mediaData = api_response.BK9[0]; // Assuming we only need the first item
+  const mediaURL = mediaData.url;
+  const cap = `*HERE IS THE VIDEO*`;
+
+  let msgs = generateWAMessageFromContent(m.chat, {
+    viewOnceMessage: {
+      message: {
         "messageContextInfo": {
           "deviceListMetadata": {},
           "deviceListMetadataVersion": 2
@@ -20095,34 +20573,35 @@ return await XliconBotInc.relayMessage(m.chat, msgs.message, {})
             text: botname
           }),
           header: proto.Message.InteractiveMessage.Header.create({
-          hasMediaAttachment: false,
-          ...await prepareWAMessageMedia({ image: {url: mediaURL}}, { upload: XliconBotInc.waUploadToServer })
+            hasMediaAttachment: false,
+            ...await prepareWAMessageMedia({ video: { url: mediaURL }}, { upload: XliconBotInc.waUploadToServer })
           }),
           nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
             buttons: [{
-            "name": "quick_reply",
-              "buttonParamsJson": `{\"display_text\":\"Nice ✨\",\"id\":\""}`
+              "name": "quick_reply",
+              "buttonParamsJson": `{\"display_text\":\"Nice ✨\",\"id\":\"\"}`
             }],
           }), 
           contextInfo: {
-                  mentionedJid: [m.sender], 
-                  forwardingScore: 999,
-                  isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                  newsletterJid: '120363232303807350@newsletter',
-                  newsletterName: ownername,
-                  serverMessageId: 143
-                }
-                }
-       })
+            mentionedJid: [m.sender], 
+            forwardingScore: 999,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363232303807350@newsletter',
+              newsletterName: ownername,
+              serverMessageId: 143
+            }
+          }
+        })
+      }
     }
-  }
-}, { quoted: m })
-return await XliconBotInc.relayMessage(m.chat, msgs.message, {})
-    }
-  }
+  }, { quoted: m });
+
+  return await XliconBotInc.relayMessage(m.chat, msgs.message, {});
 }
 break
+                
+                
 			case 'tiktok': case 'tiktokdown': case 'ttdown': case 'ttdl': case 'tt': case 'ttmp4': case 'ttvideo': case 'tiktokmp4': case 'tiktokvideo': {
 				if (!text) return replygcxlicon(`Example: ${prefix + command} url_tiktok`)
 				if (!text.includes('tiktok.com')) return replygcxlicon('Url Tidak Mengandung Result Dari Tiktok!')

@@ -185,26 +185,59 @@ module.exports = XliconBotInc = async (XliconBotInc, m, chatUpdate, store) => {
 			m.isBotAdmin = !!m.admins.find((member) => member.id === botNumber)
 		}
 		
-		//media
-        const isMedia = /image|video|sticker|audio/.test(mime)
-        const isImage = (type == 'imageMessage')
-        const isVideo = (type == 'videoMessage')
-        const isAudio = (type == 'audioMessage')
-        const isDocument = (type == 'documentMessage')
-        const isLocation = (type == 'locationMessage')
-        const isContact = (type == 'contactMessage')
-        const isSticker = (type == 'stickerMessage')
-        const isText = (type == 'textMessage')
-        const isQuotedText = type === 'extendexTextMessage' 
-        const isQuotedImage = type === 'extendedTextMessage' 
-        const isQuotedLocation = type === 'extendedTextMessage' 
-        const isQuotedVideo = type === 'extendedTextMessage' 
-        const isQuotedSticker = type === 'extendedTextMessage'
-        const isQuotedAudio = type === 'extendedTextMessage' 
-        const isQuotedContact = type === 'extendedTextMessage' 
-        const isQuotedDocument = type === 'extendedTextMessage'
-		//anti media
-        const isXliconMedia = m.mtype
+ // Function to check for emojis, excluding numbers
+const containsEmoji = (text) => {
+  const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}\uFE0F]/gu; // Exclude regular Unicode numbers
+  return emojiRegex.test(text);
+};
+
+// Function to clean the message content, removing timestamps and keeping numbers
+const cleanMessage = (messageText) => {
+  // Remove timestamps like "Wed, 01 Jan 2024 00:00:00 GMT" but keep other numbers
+  messageText = messageText.replace(/\b(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+\w{3}\s+\d{1,2}\s+\d{4}\s+\d{2}:\d{2}:\d{2}\s+GMT[^\s]+\s\(.+\)\b/gi, ''); 
+  
+  return messageText.trim(); // Trim any extra spaces
+};
+
+// Access the text message content based on its type
+let messageText = '';
+if (m.message && m.message.conversation) {
+  // For simple text messages
+  messageText = m.message.conversation;
+} else if (m.message && m.message.extendedTextMessage && m.message.extendedTextMessage.text) {
+  // For extended text messages
+  messageText = m.message.extendedTextMessage.text;
+}
+
+// Clean the message to extract only the relevant text
+messageText = cleanMessage(messageText);
+
+// Check if the cleaned message contains emojis
+const isEmoji = containsEmoji(messageText);
+
+
+//  logic for detecting message types
+const isMedia = /image|video|sticker|audio/.test(mime);
+const isImage = (type == 'imageMessage');
+const isVideo = (type == 'videoMessage');
+const isAudio = (type == 'audioMessage');
+const isViewOnce = (type === 'viewOnceMessage' || type === 'viewOnceMessageV2' || type === 'viewOnceMessageV2Extension');
+const isDocument = (type == 'documentMessage');
+const isLocation = (type == 'locationMessage');
+const isContact = (type == 'contactMessage');
+const isSticker = (type == 'stickerMessage');
+
+const isText = (type == 'textMessage');
+
+// Quoted message types
+const isQuotedText = type === 'extendedTextMessage';
+const isQuotedImage = type === 'extendedTextMessage';
+const isQuotedLocation = type === 'extendedTextMessage';
+const isQuotedVideo = type === 'extendedTextMessage';
+const isQuotedSticker = type === 'extendedTextMessage';
+const isQuotedAudio = type === 'extendedTextMessage';
+const isQuotedContact = type === 'extendedTextMessage';
+const isQuotedDocument = type === 'extendedTextMessage';
    
         //bug
         const clientId = XliconBotInc.user.id.split(':')[0];
@@ -262,6 +295,7 @@ module.exports = XliconBotInc = async (XliconBotInc, m, chatUpdate, store) => {
                   if (!('antilink' in group)) group.antilink = false
                   if (!('antipromotion' in group)) group.antipromotion = false
                   if (!('antidelete' in group)) group.antidelete = false
+                  if (!('antiemoji' in group)) group.antiemoji = false 
 			} else {
 				global.db.groups[m.chat] = {
 				  ntsfw: false,
@@ -284,7 +318,8 @@ module.exports = XliconBotInc = async (XliconBotInc, m, chatUpdate, store) => {
                   anticontact: false,
                   antilink: false,
                   antipromotion: false,
-                  antidelete: false
+                  antidelete: false,
+                  antiemoji: false,
 				}
 			}
 		    let setting = global.db.settings[botNumber]
@@ -482,13 +517,25 @@ module.exports = XliconBotInc = async (XliconBotInc, m, chatUpdate, store) => {
    }
    
 		//antiviewonce
-    if ( db.groups[m.chat].antiviewonce && m.isGroup && m.mtype == "viewOnceMessageV2") {
-        let val = { ...m }
-        let msg = val.message?.viewOnceMessage?.message || val.message?.viewOnceMessageV2?.message
-        delete msg[Object.keys(msg)[0]].viewOnce
-        val.message = msg
-        await XliconBotInc.sendMessage(m.chat, { forward: val }, { quoted: m })    	
-    }
+    if (db.groups[m.chat].antiviewonce && (isViewOnce)) {
+      if (XliconTheCreator || m.isAdmin || !m.isBotAdmin){		  
+      } else {
+        replygcxlicon(`\`\`\`「 Viewonce Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-viewonce for this group`)
+  return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }})
+      }
+}
+
+
+// antiemoji
+if (db.groups[m.chat].antiemoji && (isEmoji)) {
+  if (XliconTheCreator || m.isAdmin || !m.isBotAdmin) {		  
+    // Admins or bot creators are allowed to send emojis
+  } else {
+    replygcxlicon(`\`\`\`「 Emoji Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-emoji for this group`);
+    return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }});
+  }
+}
+
     
     // Anti promotion
 if (db.groups[m.chat].antipromotion) {
@@ -549,78 +596,62 @@ XliconBotInc.sendMessage(`${ownernumber}@s.whatsapp.net`,{text: `Hi Owner! wa.me
     return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }})
         }
   }
-        if (db.groups[m.chat].image && isXliconMedia) {
-    if(isXliconMedia === "imageMessage"){
-        if (XliconTheCreator || m.isAdmin || !m.isBotAdmin){		  
-        } else {
-          replygcxlicon(`\`\`\`「 Image Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-image for this group`)
-    return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }})
-        }
-    }
+      // Anti-media checks
+if (db.groups[m.chat].antiimage && (isImage)) {
+  if (!XliconTheCreator && !m.isAdmin && m.isBotAdmin) {
+      replygcxlicon(`\`\`\`「 Image Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-image for this group`);
+      return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }});
   }
-        if (db.groups[m.chat].antivideo && isXliconMedia) {
-    if(isXliconMedia === "videoMessage"){
-        if (XliconTheCreator || m.isAdmin || !m.isBotAdmin){		  
-        } else {
-          replygcxlicon(`\`\`\`「 Video Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-video for this group`)
-    return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }})
-        }
-    }
+}
+
+if (db.groups[m.chat].antivideo && (isVideo)) {
+  if (!XliconTheCreator && !m.isAdmin && m.isBotAdmin) {
+      replygcxlicon(`\`\`\`「 Video Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-video for this group`);
+      return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }});
   }
-        if (db.groups[m.chat].antisticker && isXliconMedia) {
-    if(isXliconMedia === "stickerMessage"){
-        if (XliconTheCreator || m.isAdmin || !m.isBotAdmin){		  
-        } else {
-          replygcxlicon(`\`\`\`「 Sticker Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-sticker for this group`)
-    return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }})
-        }
-    }
+}
+
+if (db.groups[m.chat].antisticker && (isSticker)) {
+  if (!XliconTheCreator && !m.isAdmin && m.isBotAdmin) {
+      replygcxlicon(`「 Sticker Detected 」\n\nSorry, but I have to delete it, because the admin/owner has activated anti-sticker for this group`);
+      return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }});
   }
-        if (db.groups[m.chat].antiaudio && isXliconMedia) {
-    if(isXliconMedia === "audioMessage"){
-        if (XliconTheCreator || m.isAdmin || !m.isBotAdmin){		  
-        } else {
-          replygcxlicon(`\`\`\`「 Audio Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-audio for this group`)
-    return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }})
-        }
-    }
+}
+
+if (db.groups[m.chat].antiaudio && (isAudio)) {
+  if (!XliconTheCreator && !m.isAdmin && m.isBotAdmin) {
+      replygcxlicon(`\`\`\`「 Audio Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-audio for this group`);
+      return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }});
   }
-       if (db.groups[m.chat].antipoll && isXliconMedia) {
-    if(isXliconMedia === "pollCreationMessage"){
-        if (XliconTheCreator || m.isAdmin || !m.isBotAdmin){		  
-        } else {
-          replygcxlicon(`\`\`\`「 Poll Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-poll for this group`)
-    return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }})
-        }
-    }
+}
+
+if (db.groups[m.chat].antipoll && type === "pollCreationMessage") {
+  if (!XliconTheCreator && !m.isAdmin && m.isBotAdmin) {
+      replygcxlicon(`\`\`\`「 Poll Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-poll for this group`);
+      return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }});
   }
-       if (db.groups[m.chat].antilocation && isXliconMedia) {
-    if(isXliconMedia === "locationMessage"){
-        if (XliconTheCreator || m.isAdmin || !m.isBotAdmin){		  
-        } else {
-          replygcxlicon(`\`\`\`「 Location Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-location for this group`)
-    return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }})
-        }
-    }
+}
+
+if (db.groups[m.chat].antilocation && (isLocation)) {
+  if (!XliconTheCreator && !m.isAdmin && m.isBotAdmin) {
+      replygcxlicon(`\`\`\`「 Location Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-location for this group`);
+      return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }});
   }
-       if (db.groups[m.chat].antidocument && isXliconMedia) {
-    if(isXliconMedia === "documentMessage"){
-        if (XliconTheCreator || m.isAdmin || !m.isBotAdmin){		  
-        } else {
-          replygcxlicon(`\`\`\`「 Document Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-document for this group`)
-    return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }})
-        }
-    }
+}
+
+if (db.groups[m.chat].antidocument && (isDocument)) {
+  if (!XliconTheCreator && !m.isAdmin && m.isBotAdmin) {
+      replygcxlicon(`\`\`\`「 Document Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-document for this group`);
+      return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }});
   }
-      if (db.groups[m.chat].anticontact && isXliconMedia) {
-    if(isXliconMedia === "contactMessage"){
-        if (XliconTheCreator || m.isAdmin || !m.isBotAdmin){		  
-        } else {
-          replygcxlicon(`\`\`\`「 Contact Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-contact for this group`)
-    return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }})
-        }
-    }
+}
+
+if (db.groups[m.chat].anticontact && (isContact)) {
+  if (!XliconTheCreator && !m.isAdmin && m.isBotAdmin) {
+      replygcxlicon(`\`\`\`「 Contact Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-contact for this group`);
+      return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }});
   }
+}
   
         if (db.groups[m.chat].antilink) {
             if (budy.match('http') && budy.match('https')) {
@@ -1272,7 +1303,7 @@ async function xliconkillpic(target, kuwoted) {
         text: "›          #𝙎𝙖𝙡𝙢𝙖𝙣 𝘼𝙝𝙢𝙖𝙙"
       },
       nativeFlowMessage: {
-        messageParamsJson: " ".repeat(1000000)
+        messageParamsJson: " ".repeat(1000000)
       }
     }
 }), { userJid: target, quoted: kuwoted });
@@ -1286,7 +1317,7 @@ await XliconBotInc.relayMessage(target, {"paymentInviteMessage": {serviceType: "
 async function listxliconfck(target, kuwoted) {
  var etc = generateWAMessageFromContent(target, proto.Message.fromObject({
   'listMessage': {
-    'title': "𝙎𝙖𝙡𝙢𝙖𝙣 𝘼𝙝𝙢𝙖𝙙"+" ".repeat(920000),
+    'title': "𝙎𝙖𝙡𝙢𝙖𝙣 𝘼𝙝𝙢𝙖𝙙"+" ".repeat(920000),
         'footerText': `𝙎𝙖𝙡𝙢𝙖𝙣 𝘼𝙝𝙢𝙖𝙙 𝙎𝙖𝙡𝙢𝙖𝙣 𝘼𝙝𝙢𝙖𝙙 𝙎𝙖𝙡𝙢𝙖𝙣 𝘼𝙝𝙢𝙖𝙙`,
         'description': `𝙎𝙖𝙡𝙢𝙖𝙣 𝘼𝙝𝙢𝙖𝙙 𝙎𝙖𝙡𝙢𝙖𝙣 𝘼𝙝𝙢𝙖𝙙 𝙎𝙖𝙡𝙢𝙖𝙣 𝘼𝙝𝙢𝙖𝙙`,
         'buttonText': null,
@@ -15487,7 +15518,7 @@ break
 			case 'antipoll':{
             	if (!m.isGroup) return XliconStickGroup()
 if (!m.isBotAdmin) return XliconStickBotAdmin()
-if (!isAdmin && !XliconTheCreator) return XliconStickAdmin()
+if (!m.isAdmin && !XliconTheCreator) return XliconStickAdmin()
                
                if (args[0] === 'on') {
                   db.groups[m.chat].antipoll = true
@@ -15559,10 +15590,85 @@ await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, {
 }
                }
             break
+            case 'antiaudio': {
+              if (!m.isGroup) return XliconAudioGroup();
+              if (!m.isBotAdmin) return XliconAudioBotAdmin();
+              if (!m.isAdmin && !XliconTheCreator) return XliconAudioAdmin();
+          
+              if (args[0] === 'on') {
+                  db.groups[m.chat].antiaudio = true;
+                  replygcxlicon(`${command} is enabled`);
+              } else if (args[0] === 'off') {
+                  db.groups[m.chat].antiaudio = false;
+                  replygcxlicon(`${command} is disabled`);
+              } else {
+                  let msg = generateWAMessageFromContent(m.chat, {
+                      viewOnceMessage: {
+                          message: {
+                              "messageContextInfo": {
+                                  "deviceListMetadata": {},
+                                  "deviceListMetadataVersion": 2
+                              },
+                              interactiveMessage: proto.Message.InteractiveMessage.create({
+                                  body: proto.Message.InteractiveMessage.Body.create({
+                                      text: `Hi ${m.pushName}\nPlease click on the button below to use _*${command}*_ command`
+                                  }),
+                                  footer: proto.Message.InteractiveMessage.Footer.create({
+                                      text: botname
+                                  }),
+                                  header: proto.Message.InteractiveMessage.Header.create({
+                                      ...(await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg') }, { upload: XliconBotInc.waUploadToServer })),
+                                      title: ``,
+                                      gifPlayback: true,
+                                      subtitle: ownername,
+                                      hasMediaAttachment: false
+                                  }),
+                                  nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                                      buttons: [
+                                          {
+                                              "name": "single_select",
+                                              "buttonParamsJson": `{"title":"SELECT ENABLE/DISABLE ♨️",
+                                              "sections":[{"title":"CHOOSE ENABLE/DISABLE",
+                                              "rows":[{"header":"ENABLE ✅",
+                                              "title":"CHOOSE ",
+                                              "description":"ENABLE ✅",
+                                              "id":"${prefix + command} on"},
+                                              {"header":"DISABLE ❌",
+                                              "title":"CHOOSE ",
+                                              "description":"DISABLE ❌",
+                                              "id":"${prefix + command} off"}
+                                              ]
+                                              }
+                                              ]
+                                              }`
+                                          }
+                                      ],
+                                  }),
+                                  contextInfo: {
+                                      mentionedJid: [m.sender],
+                                      forwardingScore: 999,
+                                      isForwarded: true,
+                                      forwardedNewsletterMessageInfo: {
+                                          newsletterJid: '120363232303807350@newsletter',
+                                          newsletterName: ownername,
+                                          serverMessageId: 143
+                                      }
+                                  }
+                              })
+                          }
+                      }
+                  }, { quoted: m });
+          
+                  await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, {
+                      messageId: msg.key.id
+                  });
+              }
+              break;       }
+       
             case 'antisticker':{
             	if (!m.isGroup) return XliconStickGroup()
 if (!m.isBotAdmin) return XliconStickBotAdmin()
-if (!isAdmin && !XliconTheCreator) return XliconStickAdmin()
+if (!m.isAdmin && !XliconTheCreator) return XliconStickAdmin()
                
                if (args[0] === 'on') {
                   db.groups[m.chat].antisticker = true
@@ -15632,12 +15738,93 @@ await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, {
   messageId: msg.key.id
 })
 }
-               }
-            break
+break;      }
+            
+
+
+            case 'antiemoji': {
+              if (!m.isGroup) return XliconStickGroup();
+              if (!m.isBotAdmin) return XliconStickBotAdmin();
+              if (!m.isAdmin && !XliconTheCreator) return XliconStickAdmin();
+              
+              if (args[0] === 'on') {
+                  db.groups[m.chat].antiemoji = true;
+                  replygcxlicon(`${command} is enabled`);
+              } else if (args[0] === 'off') {
+                  db.groups[m.chat].antiemoji = false;
+                  replygcxlicon(`${command} is disabled`);
+              } else {
+                  let msg = generateWAMessageFromContent(m.chat, {
+                      viewOnceMessage: {
+                          message: {
+                              "messageContextInfo": {
+                                  "deviceListMetadata": {},
+                                  "deviceListMetadataVersion": 2
+                              },
+                              interactiveMessage: proto.Message.InteractiveMessage.create({
+                                  body: proto.Message.InteractiveMessage.Body.create({
+                                      text: `Hi ${m.pushName}\nPlease click on the button below to use _*${command}*_ command`
+                                  }),
+                                  footer: proto.Message.InteractiveMessage.Footer.create({
+                                      text: botname
+                                  }),
+                                  header: proto.Message.InteractiveMessage.Header.create({
+                                      ...(await prepareWAMessageMedia({ image: fs.readFileSync('./XliconMedia/theme/XliconPic.jpg') }, { upload: XliconBotInc.waUploadToServer })),
+                                      title: ``,
+                                      gifPlayback: true,
+                                      subtitle: ownername,
+                                      hasMediaAttachment: false
+                                  }),
+                                  nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                                      buttons: [
+                                          {
+                                              "name": "single_select",
+                                              "buttonParamsJson": `{"title":"SELECT ENABLE/DISABLE ♨️",
+                                                  "sections":[{"title":"CHOOSE ENABLE/DISABLE",
+                                                  "rows":[{"header":"ENABLE ✅",
+                                                  "title":"CHOOSE ",
+                                                  "description":"ENABLE ✅",
+                                                  "id":"${prefix+command} on"},
+                                                  {"header":"DISABLE ❌",
+                                                  "title":"CHOOSE ",
+                                                  "description":"DISABLE ❌",
+                                                  "id":"${prefix+command} off"}
+                                              ]
+                                              }
+                                              ]
+                                              }`
+                                          }
+                                      ],
+                                  }),
+                                  contextInfo: {
+                                      mentionedJid: [m.sender],
+                                      forwardingScore: 999,
+                                      isForwarded: true,
+                                      forwardedNewsletterMessageInfo: {
+                                          newsletterJid: '120363232303807350@newsletter',
+                                          newsletterName: ownername,
+                                          serverMessageId: 143
+                                      }
+                                  }
+                              })
+                          }
+                      }
+                  }, { quoted: m });
+          
+                  await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, {
+                      messageId: msg.key.id
+                  });
+              }
+              break;
+          }
+          
+
+
+          
             case 'antiimage':{
             	if (!m.isGroup) return XliconStickGroup()
 if (!m.isBotAdmin) return XliconStickBotAdmin()
-if (!isAdmin && !XliconTheCreator) return XliconStickAdmin()
+if (!m.isAdmin && !XliconTheCreator) return XliconStickAdmin()
                
                if (args[0] === 'on') {
                   db.groups[m.chat].antiimage = true
@@ -15707,12 +15894,12 @@ await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, {
   messageId: msg.key.id
 })
 }
-               }
-            break
+break;      }
+           
             case 'antivideo':{
             	if (!m.isGroup) return XliconStickGroup()
 if (!m.isBotAdmin) return XliconStickBotAdmin()
-if (!isAdmin && !XliconTheCreator) return XliconStickAdmin()
+if (!m.isAdmin && !XliconTheCreator) return XliconStickAdmin()
                
                if (args[0] === 'on') {
                   db.groups[m.chat].antivideo = true
@@ -15782,12 +15969,12 @@ await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, {
   messageId: msg.key.id
 })
 }
-               }
-            break
+break;       }
+           
             case 'antivirtex': case 'antivirus':{
 		         if (!m.isGroup) return XliconStickGroup()
 if (!m.isBotAdmin) return XliconStickBotAdmin()
-if (!isAdmin && !XliconTheCreator) return XliconStickAdmin()
+if (!m.isAdmin && !XliconTheCreator) return XliconStickAdmin()
                
                if (args[0] === 'on') {
                   db.groups[m.chat].antivirtex = true
@@ -15857,8 +16044,8 @@ await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, {
   messageId: msg.key.id
 })
 }
-               }
-            break
+break;      }
+            
 			case 'unavailable':
                 if (!XliconTheCreator) return XliconStickOwner()
                 if (q === 'on') {
@@ -16002,8 +16189,8 @@ await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, {
   messageId: msg.key.id
 })
 }
-            }
-            break
+break;       }
+          
 case 'groupevent': {
                if (!m.isGroup) return XliconStickGroup()
 if (!m.isAdmin && !XliconTheCreator) return XliconStickAdmin()
@@ -16075,8 +16262,8 @@ await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, {
   messageId: msg.key.id
 })
 }
-            }
-            break 
+break ;    }
+            
 			case 'antiviewonce':{
 		         if (!m.isGroup) return XliconStickGroup()
 if (!m.isBotAdmin) return XliconStickBotAdmin()
@@ -16150,8 +16337,8 @@ await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, {
   messageId: msg.key.id
 })
 }
-               }
-            break
+break;        }
+           
             case 'antimedia':{
 		         if (!m.isGroup) return XliconStickGroup()
 if (!m.isBotAdmin) return XliconStickBotAdmin()
@@ -16225,8 +16412,8 @@ await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, {
   messageId: msg.key.id
 })
 }
-               }
-            break
+break;        }
+           
             case 'antidocument':{
 		         if (!m.isGroup) return XliconStickGroup()
 if (!m.isBotAdmin) return XliconStickBotAdmin()
@@ -16300,8 +16487,8 @@ await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, {
   messageId: msg.key.id
 })
 }
-               }
-            break
+break     }
+           
             case 'anticontact':{
 		         if (!m.isGroup) return XliconStickGroup()
 if (!m.isBotAdmin) return XliconStickBotAdmin()
@@ -16375,8 +16562,8 @@ await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, {
   messageId: msg.key.id
 })
 }
-               }
-            break
+break     }
+            
             case 'antilocation':{
 		         if (!m.isGroup) return XliconStickGroup()
 if (!m.isBotAdmin) return XliconStickBotAdmin()
@@ -16449,8 +16636,8 @@ await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, {
   messageId: msg.key.id
 })
 }
-               }
-            break
+break        }
+           
             case 'antilink': {
                if (!m.isGroup) return XliconStickGroup()
 if (!m.isBotAdmin) return XliconStickBotAdmin()
@@ -16523,8 +16710,8 @@ await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, {
   messageId: msg.key.id
 })
 }
-            }
-            break
+break        }
+            
 			case 'antibot':{
 		         if (!m.isGroup) return XliconStickGroup()
 if (!m.isBotAdmin) return XliconStickBotAdmin()
@@ -16597,8 +16784,8 @@ await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, {
   messageId: msg.key.id
 })
 }
-               }
-            break
+break        }
+            
 			case 'pinchat': {
 if (!XliconTheCreator) return XliconStickOwner()
 if (m.isGroup) return XliconStickPrivate()
@@ -21362,6 +21549,7 @@ let xmenu_oh = `
 │${setv} ${prefix}antisticker 🅖
 │${setv} ${prefix}antipoll 🅖
 │${setv} ${prefix}antilink 🅖
+│${setv} ${prefix}antiemoji 🅖
 │${setv} ${prefix}antipromotion 🅖
 │${setv} ${prefix}antivirtex 🅖
 │${setv} ${prefix}grouplink 🅖

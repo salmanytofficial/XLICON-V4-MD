@@ -72,8 +72,8 @@ global.tempatDB = 'database.json'
 //---------------------------------------------------------------------------------------//
 //api variables 
 
-global.api = "https://api.maher-zubair.xyz/"  ;
-global.id = "RnJlZV9rZXlAc2FsbWFu"  ;
+global.api = "https://api.maher-zubair.xyz/" ;
+global.id = "RnJlZV9rZXlAc2FsbWFu" ;
 
 //---------------------------------------------------------------------------------------//
 

@@ -20032,47 +20032,65 @@ await fs.unlinkSync(pl.path)
 }
 break
 
-//--------------------------------------------------------------------------------------------------//
 
-                
-case 'play2':  
+
+case 'play2':
 case 'song2': {
   try {
-    if (!text) return replygcxlicon(`Example : ${prefix + command} anime whatsapp status`);
-    const xliconplaymp3 = require('./lib/ytdl2');
-    let yts = require("youtube-yts");
+    if (!text) return replygcxlicon(`Example: ${prefix + command} anime whatsapp status`);
+
+    // Indicate that the bot is processing the request
+    await XliconStickWait(); // Show loading indicator
+
+    // Perform a search using yts
+    const yts = require("yt-search");
     let search = await yts(text);
 
-    if (!search || search.videos.length === 0) throw new Error("No videos found for the search query");
+    if (!search || search.videos.length === 0) {
+      return replygcxlicon('❌ No video found');
+    }
 
-    let anup3k = search.videos[0];
-    const pl = await xliconplaymp3.mp3(anup3k.url);
-    
-    if (!pl || !pl.path) throw new Error("Failed to retrieve mp3 file");
+    // Get the first video from the search results
+    let video = search.videos[0];
 
+    // Use the video URL to fetch audio
+    const xliconplaymp3 = require('./lib/ytdl');
+    const response = await axios.get(`https://ytdl.giftedtech.workers.dev/?url=${video.url}`);
+
+    if (!response.data || !response.data.result || !response.data.result.mp3) {
+      return replygcxlicon('🚫 Error fetching audio from the URL.');
+    }
+
+    // Prepare message with audio details
+    const audioDetails = `🎶 *Title:* _${video.title}_\n` +
+                         `⏳ *Duration:* _${video.timestamp}_\n` +
+                         `👤 *Artist:* _${video.author.name}_\n` +
+                         `👀 *Views:* _${video.views.toLocaleString()} views_\n` +
+                         `🔗 *Link:* _${video.url}_`;
+
+    // Send audio details
+    await replygcxlicon(audioDetails);
+
+    // Notify user that the audio is being downloaded
+    await replygcxlicon('📥 Downloading audio...');
+
+    // Send audio message
     await XliconBotInc.sendMessage(m.chat, {
-      audio: fs.readFileSync(pl.path),
-      fileName: anup3k.title + '.mp3',
-      mimetype: 'audio/mp4', 
-      ptt: true,
-      contextInfo: {
-        externalAdReply: {
-          title: anup3k.title,
-          body: botname,
-          thumbnail: await fetchBuffer(pl.meta.image),
-          mediaType: 2,
-          mediaUrl: anup3k.url,
-        }
-      },
-    }, {quoted: m});
+      audio: { url: response.data.result.mp3 },
+      mimetype: 'audio/mpeg'
+    }, { quoted: m });
 
-    await fs.unlinkSync(pl.path);
   } catch (error) {
     console.error("Error in play2/song2 command: ", error);
-    replygcxlicon("An error occurred while processing your request.");
+    replygcxlicon("⚠️ An error occurred while processing your request.");
   }
 }
 break;
+
+
+//--------------------------------------------------------------------------------------------------//
+
+                
 
 
 case 'ytvideo': {
@@ -20475,273 +20493,125 @@ case 'ytmp3': case 'ytaudio': case 'ytplayaudio': {
 			}
 			break  
 
-
-case 'yta': {
-    if (!text) {
-        await XliconBotInc.sendMessage(m.chat, {
-            text: 'Please provide a YouTube link to convert.',
-            footer: 'Example: .ytmp3 https://www.youtube.com/watch?v=example'
-        }, { quoted: m });
-        return;
-    }
-
-    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/;
-    if (!youtubeRegex.test(text)) {
-        await XliconBotInc.sendMessage(m.chat, { text: '❌ Please provide a valid YouTube link.' }, { quoted: m });
-        return;
-    }
-
-    try {
-        // Ask user to select quality for MP3
-        const button = [{
-            name: 'single_select',
-            buttonParamsJson: {
-                title: `Select Quality for MP3`,
-                sections: [{
-                    title: 'MP3 QUALITY OPTIONS',
-                    rows: [
-                        { title: 'Low (64kbps)', description: 'Low quality MP3', id: `${prefix}ytmp3_quality low ${text}` },
-                        { title: 'Medium (192kbps)', description: 'Medium quality MP3', id: `${prefix}ytmp3_quality medium ${text}` },
-                        { title: 'High (320kbps)', description: 'High quality MP3', id: `${prefix}ytmp3_quality high ${text}` }
-                    ]
-                }]
-            }
-        }];
-
-        // Send the button to user
-        await XliconBotInc.sendButtonMsg(m.chat, '*Please select the MP3 quality:*', null, '*Choose one:*', null, button, m);
-
-    } catch (error) {
-        console.error('Error in yta command:', error.message); // Log the error
-        await XliconBotInc.sendMessage(m.chat, { text: '❌ An error occurred while processing your request. Please try again later.' }, { quoted: m });
-    }
-}
-break;
-
-case 'ytmp3_quality': {
-    const commandArgs = text.split(' '); // Split the command text into arguments
-    const quality = commandArgs[0]; // 'low', 'medium', 'high'
-    const youtubeUrl = commandArgs[1]; // YouTube link
-
-    try {
-        const headers = {
-            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            'Referer': 'https://tomp3.cc/en96j3f',
-            'Origin': 'https://tomp3.cc',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
-        };
-
-        // Fetch video information
-        const { data: { vid, links } } = await axios.post(
-            'https://tomp3.cc/api/ajax/search?hl=en',
-            new URLSearchParams({ query: youtubeUrl, vt: 'mp3' }),
-            { headers }
-        );
-
-        console.log('Video Info (ytmp3_quality):', { vid, links }); // Log API response
-
-        const qualityMap = { low: '64', medium: '192', high: '320' };
-        const { k } = links.mp3[qualityMap[quality]];
-
-        // Convert media
-        const { data } = await axios.post(
-            'https://tomp3.cc/api/ajax/convert?hl=en',
-            new URLSearchParams({ vid, k }),
-            { headers }
-        );
-
-        console.log('Conversion Response (ytmp3_quality):', data); // Log API conversion response
-
-        if (!data || !data.dlink) {
-            await XliconBotInc.sendMessage(m.chat, { text: '❌ Failed to retrieve MP3. Please try again.' }, { quoted: m });
-            return;
-        }
-
-        const mp3Buffer = await fetchBuffer(data.dlink);
-        await XliconBotInc.sendMessage(m.chat, {
-            audio: mp3Buffer,
-            mimetype: 'audio/mp4',
-            fileName: `${data.title}.mp3`,
-        });
-
-    } catch (err) {
-        console.error('Error processing ytmp3_quality command:', err.message); // Log error
-        await XliconBotInc.sendMessage(m.chat, { text: '❌ An error occurred while processing the request. Please try again later.' }, { quoted: m });
-    }
-}
-break;
-
-case 'ytv': {
-    if (!text) {
-        await XliconBotInc.sendMessage(m.chat, {
-            text: 'Please provide a YouTube link to convert.',
-            footer: 'Example: .ytmp4 https://www.youtube.com/watch?v=example'
-        }, { quoted: m });
-        return;
-    }
-
-    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/;
-    if (!youtubeRegex.test(text)) {
-        await XliconBotInc.sendMessage(m.chat, { text: '❌ Please provide a valid YouTube link.' }, { quoted: m });
-        return;
-    }
-
-    try {
-        // Ask user to select quality for MP4
-        const button = [{
-            name: 'single_select',
-            buttonParamsJson: {
-                title: `Select Quality for MP4`,
-                sections: [{
-                    title: 'MP4 QUALITY OPTIONS',
-                    rows: [
-                        { title: 'Low (360p)', description: 'Low quality MP4', id: `${prefix}ytmp4_quality low ${text}` },
-                        { title: 'Medium (480p)', description: 'Medium quality MP4', id: `${prefix}ytmp4_quality medium ${text}` },
-                        { title: 'High (720p)', description: 'High quality MP4', id: `${prefix}ytmp4_quality high ${text}` }
-                    ]
-                }]
-            }
-        }];
-
-        // Send the button to user
-        await XliconBotInc.sendButtonMsg(m.chat, '*Please select the MP4 quality:*', null, '*Choose one:*', null, button, m);
-
-    } catch (error) {
-        console.error('Error in ytv command:', error.message); // Log the error
-        await XliconBotInc.sendMessage(m.chat, { text: '❌ An error occurred while processing your request. Please try again later.' }, { quoted: m });
-    }
-}
-break;
-
-                
-case 'ytmp4_quality': {
-    const commandArgs = text.split(' ');
-    const quality = commandArgs[0];
-    const youtubeUrl = commandArgs[1];
-
-    try {
-        const headers = {
-            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            'Referer': 'https://tomp3.cc/en96j3f',
-            'Origin': 'https://tomp3.cc',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
-        };
-
-        // Fetch video information
-        const { data: { vid, links } } = await axios.post(
-            'https://tomp3.cc/api/ajax/search?hl=en',
-            new URLSearchParams({ query: youtubeUrl, vt: 'mp4' }),
-            { headers }
-        );
-
-        console.log('Video Info (ytmp4_quality):', { vid, links }); // Log API response
-
-        const qualityMap = { low: '133', medium: '135', high: '136' };
-        const { k } = links.mp4[qualityMap[quality]];
-
-        // Convert media
-        const { data } = await axios.post(
-            'https://tomp3.cc/api/ajax/convert?hl=en',
-            new URLSearchParams({ vid, k }),
-            { headers }
-        );
-
-        console.log('Conversion Response (ytmp4_quality):', data); // Log conversion response
-
-        if (!data || !data.dlink) {
-            await XliconBotInc.sendMessage(m.chat, { text: '❌ Failed to retrieve MP4. Please try again.' }, { quoted: m });
-            return;
-        }
-
-const videoUrl = data.dlink;
-const caption = `
-📹 *YouTube Video Downloaded*
-
-📂 *Title:* _${data.title}_
-📅 *Duration:* _${data.duration} (${data.timestamp})_
-⏳ *Uploaded:* _${data.ago}_
-👀 *Views:* _${data.views}_
-📺 *Channel:* _[${data.name}](${data.channel})_
-
-*_DOWNLOADED BY XLICON V4_*\n\n
-✨ *Enjoy your video!* 🎥\n🔥 *Powered by Xlicon Bot* 💻
-        `;
-
-        await XliconBotInc.sendMessage(m.chat, {
-            video: { url: videoUrl },
-            caption: caption
-        }, { quoted: m });
-
-    } catch (err) {
-        console.error('Error processing ytmp4_quality command:', err.message); // Log error
-        await XliconBotInc.sendMessage(m.chat, { text: '❌ An error occurred while processing the request. Please try again later.' }, { quoted: m });
-    }
-}
-break;
-      
-
-case 'yta2': {
-    if (!text) return replygcxlicon(`Example: ${prefix + command} youtube_url`);
-    if (!text.includes('youtu')) return replygcxlicon('The URL does not contain results from YouTube!');
-    XliconStickWait();
-    
-    const response = await axios.get(`https://ytdl.giftedtech.workers.dev/?url=${text}`);
-    const hasil = response.data;
-
-    if (hasil.status !== true || !hasil.result.mp3) {
-        return replygcxlicon('Error fetching audio from the URL.');
-    }
-
-    await XliconBotInc.sendMessage(m.chat, {
-        audio: { url: hasil.result.mp3 },
-        mimetype: 'audio/mpeg'
-    }, { quoted: m });
-}
-break;
-
-                
-case 'ytv2': {
-    if (!text) return replygcxlicon(`💡 *Example*: ${prefix + command} youtube_url`);
-    if (!text.includes('youtu')) return replygcxlicon('🚫 The URL does not contain results from YouTube!');
-    XliconStickWait();
-
-    try {
+      case 'yta': {
+        if (!text) return replygcxlicon(`Example: ${prefix + command} youtube_url`);
+        if (!text.includes('youtu')) return replygcxlicon('The URL does not contain results from YouTube!');
+        XliconStickWait();
+        
         const response = await axios.get(`https://ytdl.giftedtech.workers.dev/?url=${text}`);
         const hasil = response.data;
-
-        console.log('API Response (ytv2):', hasil); // Log API response to the console
-
-        if (hasil.status !== true || !hasil.result.mp4) {
-            throw new Error('Error fetching video from the URL.');
+    
+        if (hasil.status !== true || !hasil.result.mp3) {
+            return replygcxlicon('Error fetching audio from the URL.');
         }
-
-        // Prepare video details
-        const { title, duration, timestamp, ago, views, name, channel, thumbnail, mp4 } = hasil.result;
-
-        const caption = `*_DOWNLOADED BY XLICON V4 MD_*\n\n
-🎬 *Title*: _${title}_\n
-⏱️ *Duration*: _${duration} seconds_\n
-📅 *Uploaded*: _${ago}_\n
-👁️ *Views*: _${views.toLocaleString()}_\n
-👤 *Uploader*: _${name}_\n
-🔗 *Channel*: _${channel}_\n\n
-✨ *Enjoy your video!* 🎥\n🔥 *Powered by Xlicon Bot* 💻`;
-
-        // Send video with caption
+    
         await XliconBotInc.sendMessage(m.chat, {
-            video: { url: mp4 },
-            caption: caption,
-            thumbnail: { url: thumbnail }
+            audio: { url: hasil.result.mp3 },
+            mimetype: 'audio/mpeg'
         }, { quoted: m });
-    } catch (error) {
-        console.error('Error in ytv2 command:', error); // Log error to the console
-        replygcxlicon('⚠️ An error occurred while processing the video.');
     }
-}
-break;
-                
-                
-                
+    break;
+    
+                    
+    case 'ytv': {
+        if (!text) return replygcxlicon(`💡 *Example*: ${prefix + command} youtube_url`);
+        if (!text.includes('youtu')) return replygcxlicon('🚫 The URL does not contain results from YouTube!');
+        XliconStickWait();
+    
+        try {
+            const response = await axios.get(`https://ytdl.giftedtech.workers.dev/?url=${text}`);
+            const hasil = response.data;
+    
+            console.log('API Response (ytv):', hasil); // Log API response to the console
+    
+            if (hasil.status !== true || !hasil.result.mp4) {
+                throw new Error('Error fetching video from the URL.');
+            }
+    
+            // Prepare video details
+            const { title, duration, timestamp, ago, views, name, channel, thumbnail, mp4 } = hasil.result;
+    
+            const caption = `*_DOWNLOADED BY XLICON V4 MD_*\n\n
+    🎬 *Title*: _${title}_\n
+    ⏱️ *Duration*: _${duration} seconds_\n
+    📅 *Uploaded*: _${ago}_\n
+    👁️ *Views*: _${views.toLocaleString()}_\n
+    👤 *Uploader*: _${name}_\n
+    🔗 *Channel*: _${channel}_\n\n
+    ✨ *Enjoy your video!* 🎥\n🔥 *Powered by Xlicon Bot* 💻`;
+    
+            // Send video with caption
+            await XliconBotInc.sendMessage(m.chat, {
+                video: { url: mp4 },
+                caption: caption,
+                thumbnail: { url: thumbnail }
+            }, { quoted: m });
+        } catch (error) {
+            console.error('Error in ytv command:', error); // Log error to the console
+            replygcxlicon('⚠️ An error occurred while processing the video.');
+        }
+    }
+    break;
+             
+    
+    case 'yta2': {
+      if (!text) return replygcxlicon(`Example: ${prefix + command} youtube_url`);
+      if (!text.includes('youtu')) return replygcxlicon('The URL does not contain results from YouTube!');
+      XliconStickWait();
+      
+      try {
+          const response = await axios.get(`https://ironman.koyeb.app/ironman/dl/ytdl2?url=${text}`);
+          const hasil = response.data;
+  
+          // Check if audio URL is available
+          if (!hasil.audio) {
+              throw new Error('No audio download link found.');
+          }
+  
+          const audioLink = hasil.audio;
+  
+          await XliconBotInc.sendMessage(m.chat, {
+              audio: { url: audioLink },
+              mimetype: 'audio/mp4' // Change to mp4 if required
+          }, { quoted: m });
+      } catch (error) {
+          console.error('Error in yta2 command:', error);
+          replygcxlicon('⚠️ An error occurred while processing the audio.');
+      }
+  }
+  break;
+  
+   case 'ytv2': {
+      if (!text) return replygcxlicon(`Example: ${prefix + command} youtube_url`);
+      if (!text.includes('youtu')) return replygcxlicon('The URL does not contain results from YouTube!');
+      XliconStickWait();
+      
+      try {
+          const response = await axios.get(`https://ironman.koyeb.app/ironman/dl/ytdl2?url=${text}`);
+          const hasil = response.data;
+  
+          // Check if video URL is available
+          if (!hasil.video) {
+              throw new Error('No video download link found.');
+          }
+  
+          const videoLink = hasil.video;
+          const caption = `*_DOWNLOADED BY XLICON V4 MD_*\n\n
+  🎬 *Title*: _${hasil.title}_\n
+  ✨ *Enjoy your video!* 🎥\n🔥 *Powered by Xlicon Bot* 💻`;
+  
+          await XliconBotInc.sendMessage(m.chat, {
+              video: { url: videoLink },
+              caption: caption,
+              thumbnail: { url: hasil.thumbnail } // Include thumbnail if available
+          }, { quoted: m });
+      } catch (error) {
+          console.error('Error in ytv2 command:', error);
+          replygcxlicon('⚠️ An error occurred while processing the video.');
+      }
+  }
+  break;
+  
 
 //----------------------------------------------------------------------------------------------//
 

@@ -55,7 +55,7 @@ global.botscript = 'https://github.com/salmanytofficial/XLICON-V4-MD' //script l
 global.packname = "𝘼𝙃𝙃𝙈𝙄 𝙆𝙐𝙉"
 global.author = "MΛDΣ BY 𝙎𝘼𝙇𝙈𝘼𝙉 𝘼𝙃𝙈𝘼𝘿"
 global.creator = "923184070915@s.whatsapp.net"
-global.xprefix = '/'
+global.xprefix = '.'
 global.premium = ["923184070915"] // Premium User
 
 //bot sett

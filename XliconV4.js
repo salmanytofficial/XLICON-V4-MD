@@ -22066,6 +22066,8 @@ let xmenu_oh = `
 │${setv} ${prefix}ytv 🅕
 │${setv} ${prefix}yta2 🅕
 │${setv} ${prefix}ytv2 🅕
+│${setv} ${prefix}image 🅕
+│${setv} ${prefix}gimage 🅕
 │${setv} ${prefix}tiktok 🅕
 │${setv} ${prefix}tiktokaudio 🅕
 │${setv} ${prefix}tiktokvideo 🅕
@@ -22255,6 +22257,7 @@ let xmenu_oh = `
 │${setv} ${prefix}mathsai 🅕
 │${setv} ${prefix}openai 🅕
 │${setv} ${prefix}dalle 🅕
+│${setv} ${prefix}stablediffusion 🅕
 │${setv} ${prefix}ai 🅕
 │${setv} ${prefix}remini 🅕
 ╰─┬────❍
@@ -22351,11 +22354,12 @@ let xmenu_oh = `
 │${setv} ${prefix}telestick 🅕
 ╰─┬────❍
 ╭─┴❍「 *Anime* 」❍
-│${setv} ${prefix}searchmenu 🅕
+│${setv} ${prefix}searchanime 🅕
 │${setv} ${prefix}animeinfo  🅕
 │${setv} ${prefix}animeid 🅕
 │${setv} ${prefix}animedl 🅕
 │${setv} ${prefix}searchmanga 🅕
+│${setv} ${prefix}amv 🅕
 │${setv} ${prefix}stickhandhold 🅕
 │${setv} ${prefix}stickshinobu 🅕
 │${setv} ${prefix}stickcuddle 🅕
@@ -24169,6 +24173,8 @@ let xmenu_oh = `
 │${setv} ${prefix}ytv 🅕
 │${setv} ${prefix}yta2 🅕
 │${setv} ${prefix}ytv2 🅕
+│${setv} ${prefix}image 🅕
+│${setv} ${prefix}gimage 🅕
 │${setv} ${prefix}tiktok 🅕
 │${setv} ${prefix}tiktokaudio 🅕
 │${setv} ${prefix}tiktokvideo 🅕
@@ -26518,6 +26524,7 @@ let xmenu_oh = `
 │${setv} ${prefix}mathsai 🅕
 │${setv} ${prefix}openai 🅕
 │${setv} ${prefix}dalle 🅕
+│${setv} ${prefix}stablediffusion 🅕
 │${setv} ${prefix}ai 🅕
 │${setv} ${prefix}remini 🅕
 ╰──────❍`
@@ -28054,11 +28061,12 @@ let xmenu_oh = `
 ├ *🅟 = For Premium User*
 ╰─┬────❍
 ╭─┴❍「 *Anime* 」❍
-│${setv} ${prefix}searchamime 🅕
+│${setv} ${prefix}searchanime 🅕
 │${setv} ${prefix}animeinfo 🅕
 │${setv} ${prefix}animeid 🅕
 │${setv} ${prefix}animedl 🅕
 │${setv} ${prefix}searchmanga 🅕
+│${setv} ${prefix}amv 🅕
 │${setv} ${prefix}stickhandhold 🅕
 │${setv} ${prefix}stickshinobu 🅕
 │${setv} ${prefix}stickcuddle 🅕

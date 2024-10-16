@@ -76,7 +76,6 @@ const scp2 = require('./lib/scraper2');
 const jsobfus = require('javascript-obfuscator');
 const {translate} = require('@vitalets/google-translate-api');
 const { randomBytes } = require('crypto')
-const MAX_FILE_SIZE_MB = 200; 
 const { BufferJSON, WA_DEFAULT_EPHEMERAL, generateWAMessageFromContent, proto, getBinaryNodeChildren, generateWAMessageContent, generateWAMessage, prepareWAMessageMedia, areJidsSameUser, getContentType, downloadContentFromMessage} = require('@whiskeysockets/baileys');
 
 let ntnsfw = JSON.parse(fs.readFileSync('./src/nsfw.json'))
@@ -376,48 +375,6 @@ const isQuotedDocument = type === 'extendedTextMessage';
 			return list[Math.floor(list.length * Math.random())]
 		}
 		
-        
-        
-        //img to url
-
-// Define the convertMediaToUrl function inside XliconV4.js
-async function convertMediaToUrl(buffer) {
-  try {
-    // Get the file extension from the buffer
-    const { ext } = await fileType.fromBuffer(buffer);
-    
-    if (!ext) throw new Error("Unsupported file type");
-
-    // Check the file size
-    const fileSizeMB = buffer.length / (1024 * 1024);
-    if (fileSizeMB > MAX_FILE_SIZE_MB) {
-      throw new Error(`File size exceeds the limit of ${MAX_FILE_SIZE_MB}MB.`);
-    }
-
-    // Prepare form data for the file upload
-    const bodyForm = new FormData();
-    bodyForm.append("fileToUpload", buffer, "file." + ext);
-    bodyForm.append("reqtype", "fileupload");
-
-    // Perform the POST request to upload the file
-    const res = await fetch("https://catbox.moe/user/api.php", {
-      method: "POST",
-      body: bodyForm,
-    });
-
-    // Check if the request was successful
-    if (!res.ok) {
-      throw new Error(`Upload failed with status ${res.status}: ${res.statusText}`);
-    }
-
-    // Get the response as text (the URL of the uploaded file)
-    const mediaUrl = await res.text();
-    return mediaUrl;
-  } catch (error) {
-    console.error("Error during media upload:", error);
-    throw new Error('Failed to upload media');
-  }
-}        
 		// Reset Limit
 		cron.schedule('00 00 * * *', () => {
 			let user = Object.keys(global.db.users)
@@ -440,30 +397,29 @@ async function convertMediaToUrl(buffer) {
 			console.log(chalk.black.bgWhite('[ MESSAGE ]:'),chalk.black.bgGreen(new Date), chalk.black.bgHex('#00EAD3')(budy || m.type) + '\n' + chalk.black(chalk.bgCyanBright('[ FROM ] :'),chalk.bgYellow(m.pushName),chalk.bgHex('#FF449F')(m.sender),chalk.bgBlue('(' + (m.isGroup ? m.pushName : 'Private Chat', m.chat) + ')')));
 		}
 		
-		// Group Only
-if (!m.isGroup && !XliconTheCreator && db.settings[botNumber].onlygrub) {
-  if (isCommand) {
-      return replygcxlicon(`*⚠️ Hello buddy!* 👋\n\n🚫 *To reduce spam*, please use the bot in a group chat! 🛑\n\n💬 If you have any issues, please chat with the owner 👉 wa.me/${ownernumber}`);
-  }
-}
-
-// Private Only
-if (!XliconTheCreator && db.settings[botNumber].onlypc && m.isGroup) {
-  if (isCommand) {
-      return replygcxlicon("👋 *Hello buddy!* \n\n❗ *To use this bot*, please send a message in private chat 📨");
-  }
-}
-
-// Auto Read
-if (db.settings[botNumber].autoread) {
-  XliconBotInc.readMessages([m.key]);
-}
-
-// Auto Set Bio
-if (db.settings[botNumber].autobio) {
-  XliconBotInc.updateProfileStatus(`🚀 *${botname}* is up and running for ⏳ ${runtime(process.uptime())} \n\n© 2024 *XLICON BOTZ* 🔒`).catch(_ => _);
-}
-
+		// Grup Only
+        if (!m.isGroup && !XliconTheCreator && db.settings[botNumber].onlygrub ) {
+        	if (isCommand){
+            return replygcxlicon(`Hello buddy! Because We Want to Reduce Spam, Please Use Bot in the Group Chat !\n\nIf you have issue please chat owner wa.me/${ownernumber}`)
+            }
+        }
+        // Private Only
+        if (!XliconTheCreator && db.settings[botNumber].onlypc && m.isGroup) {
+        	if (isCommand){
+	         return replygcxlicon("Hello buddy! if you want to use this bot, please chat the bot in private chat")
+	     }
+	}
+		
+		// Auto Read
+		if (db.settings[botNumber].autoread) {
+            XliconBotInc.readMessages([m.key]);
+        }
+        
+        //auto set bio\\
+	if (db.settings[botNumber].autobio) {
+            XliconBotInc.updateProfileStatus(`${botname} Have Been Running For ${runtime(process.uptime())}`).catch(_ => _)
+        }
+        
         //auto type
         if (db.settings[botNumber].autotype){
         if (m.message) {
@@ -496,186 +452,227 @@ if (db.settings[botNumber].autobio) {
         }
         }
         
-        // 🚫 **Auto Block Number Check**
-if (m.sender.startsWith(`${autoblocknumber}`) && db.settings[botNumber].autoblocknum === true) {
-  return XliconBotInc.updateBlockStatus(m.sender, 'block') // 🚫 Blocked
-}
-
-// 📵 **India-Only Number Check**
-if (!m.sender.startsWith('91') && db.settings[botNumber].onlyindia === true) {
-  return XliconBotInc.updateBlockStatus(m.sender, 'block') // 🇮🇳 Blocked for non-India numbers
-}
-
-// 🇮🇩 **Indonesia-Only Number Check**
-if (!m.sender.startsWith('62') && db.settings[botNumber].onlyindo === true) {
-  return XliconBotInc.updateBlockStatus(m.sender, 'block') // 🇮🇩 Blocked for non-Indonesia numbers
-}
-
-// 🌍 **Anti-Foreign Number Check**
-if (!m.sender.startsWith(`${antiforeignnumber}`) && db.groups[m.chat].antiforeignnum === true) { 
-  if (XliconTheCreator || m.isAdmin || !m.isBotAdmin) return
-  XliconBotInc.sendMessage(m.chat, { text: `⚠️ *Sorry buddy!* You will be removed because the group admin/owner has enabled *anti-foreign number*. Only numbers with the +${antiforeignnumber} country code are allowed to join this group. 😢` }, { quoted: m })
-  await sleep(2000)
-  await XliconBotInc.groupParticipantsUpdate(m.chat, [m.sender], 'remove') // ❌ Removed from group
-}
-
+        //auto block number
+        if (m.sender.startsWith(`${autoblocknumber}`) && db.settings[botNumber].autoblocknum === true) {
+            return XliconBotInc.updateBlockStatus(m.sender, 'block')
+        }
+        if (!m.sender.startsWith('91') && db.settings[botNumber].onlyindia === true) {
+            return XliconBotInc.updateBlockStatus(m.sender, 'block')
+        }
+        if (!m.sender.startsWith('62') && db.settings[botNumber].onlyindo === true) {
+            return XliconBotInc.updateBlockStatus(m.sender, 'block')
+        } 
+        if (!m.sender.startsWith(`${antiforeignnumber}`) && db.groups[m.chat].antiforeignnum === true){ 
+        	if (XliconTheCreator || m.isAdmin || !m.isBotAdmin) return
+            XliconBotInc.sendMessage(m.chat, { text: `Sorry buddy! you will be removed because the group admin/owner has enabled anti foreign number, only +${antiforeignnumber} country code is allowed to join the group` }, {quoted: m})
+            await sleep(2000)
+            await XliconBotInc.groupParticipantsUpdate(m.chat, [m.sender], 'remove')
+        }
         
-       // 📥 **Download Status #ctto**
-try {
+        //download status #ctto
+        try {
   const textLower = m.text.toLowerCase();
-  
-  // 🎯 **Check for specific download commands**
   if (textLower === 'download' || textLower === 'statusdown' || textLower === 'take' || textLower === 'send') {
-      const quotedMessage = m.msg.contextInfo.quotedMessage;
-      
-      // 🔍 **Check if there's a quoted message**
-      if (quotedMessage) {
-          
-          // 🖼️ **Handle image message**
-          if (quotedMessage.imageMessage) {
-              let imageCaption = quotedMessage.imageMessage.caption;
-              let imageUrl = await XliconBotInc.downloadAndSaveMediaMessage(quotedMessage.imageMessage);
-              XliconBotInc.sendMessage(m.chat, { 
-                  image: { url: imageUrl }, 
-                  caption: imageCaption 
-              });
-              replygcxlicon('*Downloading status...* 📥');
-          }
-          
-          // 🎥 **Handle video message**
-          if (quotedMessage.videoMessage) {
-              let videoCaption = quotedMessage.videoMessage.caption;
-              let videoUrl = await XliconBotInc.downloadAndSaveMediaMessage(quotedMessage.videoMessage);
-              XliconBotInc.sendMessage(m.chat, { 
-                  video: { url: videoUrl }, 
-                  caption: videoCaption 
-              });
-              replygcxlicon('*Downloading status...* 📥');
-          }
+    const quotedMessage = m.msg.contextInfo.quotedMessage;
+    if (quotedMessage) {
+      if (quotedMessage.imageMessage) {
+        let imageCaption = quotedMessage.imageMessage.caption;
+        let imageUrl = await XliconBotInc.downloadAndSaveMediaMessage(quotedMessage.imageMessage);
+        XliconBotInc.sendMessage(m.chat, { image: { url: imageUrl }, caption: imageCaption });
+        replygcxlicon('*Downloading status...*');
       }
+      if (quotedMessage.videoMessage) {
+        let videoCaption = quotedMessage.videoMessage.caption;
+        let videoUrl = await XliconBotInc.downloadAndSaveMediaMessage(quotedMessage.videoMessage);
+        XliconBotInc.sendMessage(m.chat, { video: { url: videoUrl }, caption: videoCaption });
+        replygcxlicon('*Downloading status...*');
+      }
+    }
   }
 } catch (error) {
-  console.error("❌ Error in 'send message' handling:", error);
+  console.error("Error in 'send message' handling:", error);
 }
-
         
- // 🎨 Auto Sticker
-if (db.settings[botNumber].autosticker) {
-  if (m.key.fromMe) return;
-  if (/image/.test(mime) && !/webp/.test(mime)) {
-      let mediac = await quoted.download();
-      XliconBotInc.sendImageAsSticker(m.chat, mediac, m, { packname: global.packname, author: global.author });
-      console.log(`✨ Auto sticker detected`);
-  } else if (/video/.test(mime)) {
-      if ((quoted.msg || quoted).seconds > 11) return;
-      let mediac = await quoted.download();
-      XliconBotInc.sendVideoAsSticker(m.chat, mediac, m, { packname: global.packname, author: global.author });
-  }
-}
-
-// 🚫 Anti-Bot
-if (db.groups[m.chat].antibot) {
-  if (m.isBaileys && m.fromMe == false) {
-      if (m.isAdmin || !m.m.isBotAdmin) {		  
-          // Do nothing
+        //autosticker
+        if (db.settings[botNumber].autosticker) {
+        	if (m.key.fromMe) return
+            if (/image/.test(mime) && !/webp/.test(mime)) {
+                let mediac = await quoted.download()
+                XliconBotInc.sendImageAsSticker(m.chat, mediac, m, { packname: global.packname, author: global.author })
+                console.log(`Auto sticker detected`)
+            } else if (/video/.test(mime)) {
+                if ((quoted.msg || quoted).seconds > 11) return
+                let mediac = await quoted.download()
+                XliconBotInc.sendVideoAsSticker(m.chat, mediac, m, { packname: global.packname, author: global.author })
+            }
+        }
+        
+        //antibot
+        if (db.groups[m.chat].antibot) {
+    if (m.isBaileys && m.fromMe == false){
+        if (m.isAdmin || !m.m.isBotAdmin){		  
+        } else {
+          replygcxlicon(`*Another Bot Detected*\n\nHusshhh Get away from this group!!!`)
+    return await XliconBotInc.groupParticipantsUpdate(m.chat, [m.sender], 'remove')
+        }
+    }
+   }
+   
+		//antiviewonce
+    if (db.groups[m.chat].antiviewonce && (isViewOnce)) {
+      if (XliconTheCreator || m.isAdmin || !m.isBotAdmin){		  
       } else {
-          replygcxlicon(`🚨 *Another Bot Detected* 🚨\n\nHusshhh, get away from this group!!!`);
-          return await XliconBotInc.groupParticipantsUpdate(m.chat, [m.sender], 'remove');
+        replygcxlicon(`\`\`\`「 Viewonce Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-viewonce for this group`)
+  return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }})
       }
-  }
 }
 
-// 🔒 Anti-View Once
-if (db.groups[m.chat].antiviewonce && (isViewOnce)) {
-  if (XliconTheCreator || m.isAdmin || !m.isBotAdmin) {		  
-      // Do nothing
-  } else {
-      replygcxlicon(`📸 *View Once Detected* 📸\n\nSorry, but I have to delete it, because the admin/owner has activated anti-viewonce for this group.`);
-      return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }});
-  }
-}
 
-// 🚫 Anti-Emoji
+// antiemoji
 if (db.groups[m.chat].antiemoji && (isEmoji)) {
   if (XliconTheCreator || m.isAdmin || !m.isBotAdmin) {		  
-      // Admins or bot creators are allowed to send emojis
+    // Admins or bot creators are allowed to send emojis
   } else {
-      replygcxlicon(`🚫 *Emoji Detected* 🚫\n\nSorry, but I have to delete it, because the admin/owner has activated anti-emoji for this group.`);
-      return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }});
+    replygcxlicon(`\`\`\`「 Emoji Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-emoji for this group`);
+    return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }});
   }
 }
 
-// 📢 Anti-Promotion
+    
+    // Anti promotion
 if (db.groups[m.chat].antipromotion) {
-  if (budy.match(`instagram booster|tiktok booster|ml booster|bgmi selling|selling uc|selling diamonds|selling coin|selling id|selling account|selling ids|buy account|sell account|buy id|sell id|instagram followers|tiktok followers|buy panel|sell panel|sell bug bot|buy bug bot|buy bot bug|sell bot bug|adminpanel5kpm|open jasa push member grup|yangmaubuypanelpm|admin panel 10k pm|Hanya menyediakan Jasa Push Member Grup|admin panel 5k pm|yang mau beli panel murah pm|list harga panel by|list harga vps|LIST HARGA VPS|OPEN JASA PUSH MEMBER GRUP|READY|Redy|LIST HARGA PANEL BY|list harga panel|menyediakan|MENYEDIAKAN|OPEN MURBUG|open|OPEN|PANEL READY|PANEL|PANNEL READY|panel|panel ready|pannel ready minat pm|mau panel pm|MAU PANNEL PM|Admin panel ready|ADMIN PANEL READY|Chat aja om ready selalu|OPEN JASA INSTALL|open jasa installMENYEDIAKAN JASA INSTALL`)) {
-      if (!m.isBotAdmin) return;
-      if (XliconTheCreator) return;
-      if (m.isAdmin) return;
-      XliconBotInc.sendMessage(m.chat, {
-          delete: {
-              remoteJid: m.chat,
-              fromMe: false,
-              id: m.key.id,
-              participant: m.key.participant
-          }
-      });
-      XliconBotInc.sendMessage(m.chat, {text:`🚫 *Promotion Detected* 🚫\n\n@${m.sender.split("@")[0]} has sent a promotion message and successfully deleted.`, contextInfo:{mentionedJid:[m.sender]}});
-  }
+if (budy.match(`instagram booster|tiktok booster|ml booster|bgmi selling|selling uc|selling diamonds|selling coin|selling id|selling account|selling ids|buy account|sell account|buy id|sell id|instagram followers|tiktok followers|buy panel|sell panel|sell bug bot|buy bug bot|buy bot bug|sell bot bug|adminpanel5kpm|open jasa push member grup|yangmaubuypanelpm|admin panel 10k pm|Hanya menyediakan Jasa Push Member Grup|admin panel 5k pm|yang mau beli panel murah pm|list harga panel by|list harga vps|LIST HARGA VPS|OPEN JASA PUSH MEMBER GRUP|READY|Redy|LIST HARGA PANEL BY|list harga panel|menyediakan|MENYEDIAKAN|OPEN MURBUG|open|OPEN|PANEL READY|PANEL|PANNEL READY|panel|panel ready|pannel ready minat pm|mau panel pm|MAU PANNEL PM|Admin panel ready|ADMIN PANEL READY|Chat aja om ready selalu|OPEN JASA INSTALL|open jasa installMENYEDIAKAN JASA INSTALL|menyediakan jasa install`)) {
+if (!m.isBotAdmin) return
+if(XliconTheCreator) return
+if (m.isAdmin) return
+XliconBotInc.sendMessage(m.chat,
+			    {
+			        delete: {
+			            remoteJid: m.chat,
+			            fromMe: false,
+			            id: m.key.id,
+			            participant: m.key.participant
+			        }
+			    })
+XliconBotInc.sendMessage(m.chat, {text:`\`\`\`「 Promotion Detected 」\`\`\`\n\n@${m.sender.split("@")[0]} has sent a promotion message and successfully deleted`, contextInfo:{mentionedJid:[m.sender]}}, {quoted:m})
+}
 }
 
-// 🚫 Respond to Bad Words
-if (db.groups[m.chat].badword) {
-  for (let bak of bad) {
-      if (budy === bak) {
-          XliconBotInc.sendMessage(m.chat, {
-              delete: {
-                  remoteJid: m.chat,
-                  fromMe: false,
-                  id: m.key.id,
-                  participant: m.key.participant
-              }
-          });
-          XliconBotInc.sendMessage(m.chat, {text:`🚫 *Bad Word Detected* 🚫\n\n@${m.sender.split("@")[0]} was using harsh words and their chat has been deleted.`, contextInfo:{mentionedJid:[m.sender]}});
-      }
-  }
-}
+//respond
+        if (db.groups[m.chat].badword) {
+            for (let bak of bad) {
+               if (budy === bak) {
+                  XliconBotInc.sendMessage(m.chat,
+			    {
+			        delete: {
+			            remoteJid: m.chat,
+			            fromMe: false,
+			            id: m.key.id,
+			            participant: m.key.participant
+			        }
+			    })
+			XliconBotInc.sendMessage(m.chat, {text:`\`\`\`「 Bad Word Detected 」\`\`\`\n\n@${m.sender.split("@")[0]} was using harsh words and his chat has been deleted`, contextInfo:{mentionedJid:[m.sender]}}, {quoted:m})
+               }
+            }
+        }
 
-// 🦠 Anti-Virus
+//ANTI VIRUS
 if (m.isGroup && db.groups[m.chat].antivirtex) {
-  if (budy.includes('๒๒๒๒') || budy.includes('ดุ') || budy.includes('ผิดุท้เึางืผิดุท้เึางื') || budy.includes('๑๑๑๑๑๑๑๑๑') || budy.includes('৭৭৭৭৭৭৭৭') || budy.includes('   ⃢   ⃢   ⃢  ') || budy.includes('*⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃟⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢⃟⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢⃟⃟ᡃ⃟ᡃ⃟ᡃ⃢ᡃ⃢ᡃ⃢⃟⃢⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡟᡟᡟᡟ') || budy.includes('ผดิทุเ้ึางผืดิทุเ้') || budy.includes('.*࡞ࣰࣰࣰࣲࣲࣲࣲࣩࣩࣩࣩࣶࣶ࣯࣯࣮࣮ࣦ࣯ࣨࣨࣨࣻࣻࣻࣼࣼࣼࣽࣽࣾࣷࣵࣴ࣬࣬࣬ࣤࣤࣧࣧ*') || budy.includes('᥋') || budy.includes('؁') || budy.includes('ٯٯٯٯٯ')) {
-      if (m.isBotAdmin) return replygcxlicon('*🦠 VIRTEX DETECTED*');
-      console.log(color('[KICK]', 'red'), color('Received a virus text!', 'yellow'));
-      XliconBotInc.sendText(m.chat, `*🚨 MARK AS READ* 🚨\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n *Virus sender here👇:* \nwa.me/${sender.split("@")[0]}`);   
-      if (!m.m.isBotAdmin || XliconTheCreator) return;
-      XliconBotInc.groupParticipantsUpdate(m.chat, [sender], 'remove');
-      await XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }});
-      XliconBotInc.sendMessage(`${ownernumber}@s.whatsapp.net`, { text: `Hi Owner! wa.me/${sender.split("@")[0]} Detected Having Sent Virtex in ${isGroup ? `in ${groupName}` : ''}` });
+if (budy.includes('๒๒๒๒') || budy.includes('ดุ') || budy.includes('ผิดุท้เึางืผิดุท้เึางื') || budy.includes('๑๑๑๑๑๑๑๑') || budy.includes('৭৭৭৭৭৭৭৭') || budy.includes('   ⃢   ⃢   ⃢  ') || budy.includes('*⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃟⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢⃟⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢⃟⃟ᡃ⃟ᡃ⃟ᡃ⃢ᡃ⃢ᡃ⃢⃟⃢⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃟⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢⃟⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢⃟⃟ᡃ⃟ᡃ⃟ᡃ⃢ᡃ⃢ᡃ⃢⃟⃢⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃢ᡃ⃟⃟⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢⃟⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢ᡃ⃢⃟⃟ᡃ⃟ᡃ⃟ᡃ⃢ᡃ⃢ᡃ⃢⃟⃢⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟ᡃ⃟') || budy.includes('ผดิทุเ้ึางผืดิทุเ้') || budy.includes('.*࡞ࣰࣰࣰࣲࣲࣲࣲࣩࣩࣩࣩࣶࣶ࣯࣯࣮࣮ࣦ࣯ࣨࣨࣨࣻࣻࣻࣼࣼࣼࣽࣽࣾࣷࣵࣴ࣬࣬࣬ࣤࣤࣧࣧ*') || budy.includes('᥋') || budy.includes('؁') || budy.includes('ٯٯٯٯٯ') ) {
+if (m.isBotAdmin) return replygcxlicon('*VIRTEX DETECTED*')
+console.log(color('[KICK]', 'red'), color('Received a virus text!', 'yellow'))
+XliconBotInc.sendText(m.chat, `*MARK AS READ*\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n *Virus sender here👇:* \nwa.me/${sender.split("@")[0]}`)   
+if (!m.m.isBotAdmin) return
+if(XliconTheCreator) return
+XliconBotInc.groupParticipantsUpdate(m.chat, [sender], 'remove')
+await XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }})
+XliconBotInc.sendMessage(`${ownernumber}@s.whatsapp.net`,{text: `Hi Owner! wa.me/${sender.split("@")[0]} Detected Having Sent Virtex ${isGroup?`in ${groupName}`:''}`})
+ }
+ }
+    
+    //anti media
+        if (db.groups[m.chat].antimedia && isMedia) {
+        if (XliconTheCreator || m.isAdmin || !m.isBotAdmin){		  
+        } else {
+          replygcxlicon(`\`\`\`「 Media Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-media for this group`)
+    return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }})
+        }
   }
-}
-
-// 🖼️ Anti-Media
-if (db.groups[m.chat].antimedia && isMedia) {
-  if (XliconTheCreator || m.isAdmin || !m.isBotAdmin) {		  
-      // Do nothing
-  } else {
-      replygcxlicon(`🖼️ *Media Detected* 🖼️\n\nSorry, but I have to delete it, because the admin/owner has activated anti-media for this group.`);
+      // Anti-media checks
+if (db.groups[m.chat].antiimage && (isImage)) {
+  if (!XliconTheCreator && !m.isAdmin && m.isBotAdmin) {
+      replygcxlicon(`\`\`\`「 Image Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-image for this group`);
       return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }});
   }
 }
 
-// 🔗 Anti-Link
-if (db.groups[m.chat].antilink) {
-  if (budy.match('http') && budy.match('https')) {
-      let bvl = `🔗 *Link Detected* 🔗\n\nAdmin has sent a link, admin is free to send any link 😇`;
-      if (m.isAdmin || m.key.fromMe || XliconTheCreator) return replygcxlicon(bvl);
-      await XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }});
-      XliconBotInc.sendMessage(m.chat, {
-          text: `🔗 *Link Detected* 🔗\n\n@${m.sender.split("@")[0]} has sent a link and successfully deleted.`,
-          contextInfo: { mentionedJid: [m.sender] }
-      }, { quoted: m });
+if (db.groups[m.chat].antivideo && (isVideo)) {
+  if (!XliconTheCreator && !m.isAdmin && m.isBotAdmin) {
+      replygcxlicon(`\`\`\`「 Video Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-video for this group`);
+      return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }});
   }
 }
 
+if (db.groups[m.chat].antisticker && (isSticker)) {
+  if (!XliconTheCreator && !m.isAdmin && m.isBotAdmin) {
+      replygcxlicon(`「 Sticker Detected 」\n\nSorry, but I have to delete it, because the admin/owner has activated anti-sticker for this group`);
+      return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }});
+  }
+}
+
+if (db.groups[m.chat].antiaudio && (isAudio)) {
+  if (!XliconTheCreator && !m.isAdmin && m.isBotAdmin) {
+      replygcxlicon(`\`\`\`「 Audio Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-audio for this group`);
+      return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }});
+  }
+}
+
+if (db.groups[m.chat].antipoll && type === "pollCreationMessage") {
+  if (!XliconTheCreator && !m.isAdmin && m.isBotAdmin) {
+      replygcxlicon(`\`\`\`「 Poll Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-poll for this group`);
+      return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }});
+  }
+}
+
+if (db.groups[m.chat].antilocation && (isLocation)) {
+  if (!XliconTheCreator && !m.isAdmin && m.isBotAdmin) {
+      replygcxlicon(`\`\`\`「 Location Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-location for this group`);
+      return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }});
+  }
+}
+
+if (db.groups[m.chat].antidocument && (isDocument)) {
+  if (!XliconTheCreator && !m.isAdmin && m.isBotAdmin) {
+      replygcxlicon(`\`\`\`「 Document Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-document for this group`);
+      return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }});
+  }
+}
+
+if (db.groups[m.chat].anticontact && (isContact)) {
+  if (!XliconTheCreator && !m.isAdmin && m.isBotAdmin) {
+      replygcxlicon(`\`\`\`「 Contact Detected 」\`\`\`\n\nSorry, but I have to delete it, because the admin/owner has activated anti-contact for this group`);
+      return XliconBotInc.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant }});
+  }
+}
+  
+        if (db.groups[m.chat].antilink) {
+            if (budy.match('http') && budy.match('https')) {
+               bvl = `\`\`\`「 Link Detected 」\`\`\`\n\nAdmin has sent a link, admin is free to send any link😇`
+if (m.isAdmin) return replygcxlicon(bvl)
+if (m.key.fromMe) return replygcxlicon(bvl)
+if (XliconTheCreator) return replygcxlicon(bvl)
+               await XliconBotInc.sendMessage(m.chat,
+			    {
+			        delete: {
+			            remoteJid: m.chat,
+			            fromMe: false,
+			            id: m.key.id,
+			            participant: m.key.participant
+			        }
+			    })
+			XliconBotInc.sendMessage(m.chat, {text:`\`\`\`「 Link Detected 」\`\`\`\n\n@${m.sender.split("@")[0]} has sent a link and successfully deleted`, contextInfo:{mentionedJid:[m.sender]}}, {quoted:m})
+            }
+        }
         
         //auto download #ctto
         if (db.settings[botNumber].autodownload && !m.key.fromMe) {
@@ -915,20 +912,16 @@ fs.writeFileSync('./src/user.json', JSON.stringify(xliconverifieduser, null, 2))
 			}
 		}
 		
-	// 💤 AFK Detection
-let mentionUser = [...new Set([...(m.mentionedJid || []), ...(m.quoted ? [m.quoted.sender] : [])])];
-for (let jid of mentionUser) {
-    let user = global.db.users[jid];
-    if (!user) continue;
-    let afkTime = user.afkTime;
-    if (!afkTime || afkTime < 0) continue;
-    let reason = user.afkReason || '';
-    
-    // 💬 Reply to the user who tagged the AFK user
-    replygcxlicon(`🚫 *Don't tag him!* 🚫\n\n😴 He's AFK ${reason ? 'with reason: *' + reason + '*' : 'without reason'}\n🕒 During: ${clockString(new Date - afkTime)}`.trim());
-}
-
-
+		// Afk
+		let mentionUser = [...new Set([...(m.mentionedJid || []), ...(m.quoted ? [m.quoted.sender] : [])])]
+		for (let jid of mentionUser) {
+			let user = global.db.users[jid]
+			if (!user) continue
+			let afkTime = user.afkTime
+			if (!afkTime || afkTime < 0) continue
+			let reason = user.afkReason || ''
+			replygcxlicon(`Don't tag him!\nHe's AFK ${reason ? 'with reason ' + reason : 'no reason'}\nDuring ${clockString(new Date - afkTime)}`.trim())
+		}
 		if (global.db.users[m.sender].afkTime > -1) {
 			let user = global.db.users[m.sender]
 			replygcxlicon(`@${m.sender.split('@')[0]} berhenti AFK${user.afkReason ? ' after ' + user.afkReason : ''}\nDuring ${clockString(new Date - user.afkTime)}`)
@@ -1001,11 +994,10 @@ quoted: m,
 })
 }
 
-// 🌟 Premium Feature Notification
-async function replyprem(teks) {
-  replygcxlicon(`🚫 *This feature is for premium users only!* 🚫\n\n✨ To access this feature, please contact the owner to become a premium user. ✨`);
+//premium
+        async function replyprem(teks) {
+    replygcxlicon(`This feature is for premium user, contact the owner to become premium user`)
 }
-
 
 //script replier
         async function sendXliconBotIncMessage(chatId, message, options = {}){
@@ -1655,7 +1647,7 @@ case 'handsomecheck':{
         },
         interactiveMessage: proto.Message.InteractiveMessage.create({
           body: proto.Message.InteractiveMessage.Body.create({
-            text: `*${command}* 📝\n\n*Name:* ${q} 👤\n*Answer:* *${teng}%* 📊`
+            text: `*${command}*\n\nName : ${q}\nAnswer : *${teng}%*`
           }),
           footer: proto.Message.InteractiveMessage.Footer.create({
             text: botname
@@ -1700,7 +1692,7 @@ case 'beautifulcheck':{
         },
         interactiveMessage: proto.Message.InteractiveMessage.create({
           body: proto.Message.InteractiveMessage.Body.create({
-            text: `*${command}* 📝\n\n👤 Name: *${q}*\n✅ Answer: *${tik}%*`
+            text: `*${command}*\n\nName : ${q}\nAnswer : *${tik}%*`
           }),
           footer: proto.Message.InteractiveMessage.Footer.create({
             text: botname
@@ -1745,7 +1737,7 @@ return await XliconBotInc.relayMessage(m.chat, msgs.message, {})
         },
         interactiveMessage: proto.Message.InteractiveMessage.create({
           body: proto.Message.InteractiveMessage.Body.create({
-            text: `🔍 Character Check: *${q}*\n✅ Answer: *${taky}*`
+            text: `Character Check : ${q}\nAnswer : *${taky}*`
           }),
           footer: proto.Message.InteractiveMessage.Footer.create({
             text: botname
@@ -1789,70 +1781,59 @@ break
 			case 'rentbot':
                 replygcxlicon(`Type ${prefix}owner and chat him`)
                 break
-
-                case 'idgroup': case 'idgc': case 'groupid': {
-                  if (!XliconTheCreator) return XliconStickOwner()
-                  let getGroups = await XliconBotInc.groupFetchAllParticipating()
-                  let groups = Object.entries(getGroups).slice(0).map((entry) => entry[1])
-                  let anu = groups.map((v) => v.id)
-                  let teks = `⬣ *GROUP LIST BELOW* 🌐\n\n📊 Total Groups: *${anu.length}* Groups\n\n`
-                  
-                  for (let x of anu) {
-                      let metadata2 = await XliconBotInc.groupMetadata(x)
-                      teks += `◉ *Name*: ${metadata2.subject}\n◉ *ID*: ${metadata2.id}\n◉ *Members*: ${metadata2.participants.length}\n\n────────────────────────\n\n`
-                  }
-                  
-                  replygcxlicon(teks + `📋 To Use Please Type Command: *${prefix}pushcontact idgroup|teks*\n\nBefore using, please first copy the group ID above.`)
-              }
-              break
-              
-
-              case 'repo': case 'repository': {
-                try {
-                  const [, username, repoName] = botscript.match(/github\.com\/([^/]+)\/([^/]+)/);
-                  const response = await axios.get(`https://api.github.com/repos/${username}/${repoName}`);
-                  
-                  if (response.status === 200) {
-                    const repoData = response.data;
-                    const formattedInfo = `
-💻 *Bot Name:* _XLICON-V4-MD_
-🤖 *Description:* _Multidevice Whatsapp Bot_
-              
+      case 'idgroup': case 'idgc': case 'groupid': {
+if (!XliconTheCreator) return XliconStickOwner()
+let getGroups = await XliconBotInc.groupFetchAllParticipating()
+let groups = Object.entries(getGroups).slice(0).map((entry) => entry[1])
+let anu = groups.map((v) => v.id)
+let teks = `⬣ *GROUP LIST BELOW*\n\nTotal Group : ${anu.length} Group\n\n`
+for (let x of anu) {
+let metadata2 = await XliconBotInc.groupMetadata(x)
+teks += `◉ Name : ${metadata2.subject}\n◉ ID : ${metadata2.id}\n◉ Member : ${metadata2.participants.length}\n\n────────────────────────\n\n`
+}
+replygcxlicon(teks + `To Use Please Type Command ${prefix}pushcontact idgroup|teks\n\nBefore using, please first copy the group id above`)
+}
+break
+case 'repo': case 'repository': {
+  try {
+    const [, username, repoName] = botscript.match(/github\.com\/([^/]+)\/([^/]+)/)
+    const response = await axios.get(`https://api.github.com/repos/${username}/${repoName}`)
+    if (response.status === 200) {
+      const repoData = response.data
+      const formattedInfo = `
 ✨ *Repository Name:* _${repoData.name}_
 📄 *Description:* _${repoData.description || 'No description provided.'}_
 👤 *Owner:* _${repoData.owner.login}_
 ⭐ *Stars:* _${repoData.stargazers_count}_
 🍴 *Forks:* _${repoData.forks_count}_
 🔗 *URL:* ${repoData.html_url}
-                    `.trim();
-              
-                    await XliconBotInc.relayMessage(m.chat, {
-                      requestPaymentMessage: {
-                        currencyCodeIso4217: 'USD',
-                        amount1000: 69000,
-                        requestFrom: m.sender,
-                        noteMessage: {
-                          extendedTextMessage: {
-                            text: formattedInfo,
-                            contextInfo: {
-                              externalAdReply: {
-                                showAdAttribution: true
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }, { quoted: m });
-                  } else {
-                    await replygcxlicon(`Unable to fetch repository information`);
-                  }
-                } catch (error) {
-                  console.error(error);
-                  await replygcxlicon(`Repository currently not available`);
+      `.trim()
+      await XliconBotInc.relayMessage(m.chat, {
+        requestPaymentMessage: {
+          currencyCodeIso4217: 'USD',
+          amount1000: 69000,
+          requestFrom: m.sender,
+          noteMessage: {
+            extendedTextMessage: {
+              text: formattedInfo,
+              contextInfo: {
+                externalAdReply: {
+                  showAdAttribution: true
                 }
               }
-              break;
-              
+            }
+          }
+        }
+      }, { quoted: m })
+    } else {
+      await replygcxlicon(`Unable to fetch repository information`)
+    }
+  } catch (error) {
+    console.error(error)
+    await replygcxlicon(`Repository currently not available`)
+  }
+}
+break
 
 			case 'myip':
             case 'ipbot':
@@ -1868,34 +1849,32 @@ break
                     })
                 })
             break
-
-
-
             case 'request': case 'reportbug': {
-    if (!text) return replygcxlicon(`Example: ${prefix + command} hi dev, play command is not working`);
+	if (!text) return replygcxlicon(`Example : ${
+        prefix + command
+      } hi dev play command is not working`)
+            textt = `*| REQUEST/BUG |*`
+            teks1 = `\n\n*User* : @${
+   m.sender.split("@")[0]
+  }\n*Request/Bug* : ${text}`
+            teks2 = `\n\n*Hii ${m.pushName},You request has been forwarded to my Owners*.\n*Please wait...*`
+            for (let i of owner) {
+                XliconBotInc.sendMessage(i + "@s.whatsapp.net", {
+                    text: textt + teks1,
+                    mentions: [m.sender],
+                }, {
+                    quoted: m,
+                })
+            }
+            XliconBotInc.sendMessage(m.chat, {
+                text: textt + teks2 + teks1,
+                mentions: [m.sender],
+            }, {
+                quoted: m,
+            })
 
-    const textt = `📝 *| REQUEST/BUG |*`;
-    const teks1 = `\n\n👤 *User*: @${m.sender.split("@")[0]}\n🛠️ *Request/Bug*: ${text}`;
-    const teks2 = `\n\n👋 *Hi ${m.pushName}, your request has been forwarded to my Owners.*\n⏳ *Please wait...*`;
-
-    for (let i of owner) {
-        XliconBotInc.sendMessage(i + "@s.whatsapp.net", {
-            text: textt + teks1,
-            mentions: [m.sender],
-        }, {
-            quoted: m,
-        });
-    }
-
-    XliconBotInc.sendMessage(m.chat, {
-        text: textt + teks2 + teks1,
-        mentions: [m.sender],
-    }, {
-        quoted: m,
-    });
-}
-break;
-
+        }
+        break
 			case 'socialmedia': 
         case 'sosmed': 
         case 'update':{
@@ -1936,9 +1915,9 @@ break;
         `Follow Developer On Instagram`, // Body message
         botname, // Footer message
         'Visit', // Button display text
-        'https://www.instagram.com/ahmmikun', // Command (URL in this case)
+        'https://www.instagram.com/unicorn_xlicon13', // Command (URL in this case)
         'cta_url', // Button type
-        'https://www.instagram.com/ahmmikun' // URL (used in image generation)
+        'https://www.instagram.com/unicorn_xlicon13' // URL (used in image generation)
     ], 
     [
         'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/1024px-WhatsApp.svg.png', // Image URL
@@ -1946,9 +1925,9 @@ break;
         `Contact Developer On WhatsApp`, // Body message
         botname, // Footer message
         'Visit', // Button display text
-        'https://Wa.me/923184070915', // Command (URL in this case)
+        'https://Wa.me/916909137213', // Command (URL in this case)
         'cta_url', // Button type
-        'https://Wa.me/923184070915' // URL (used in image generation)
+        'https://Wa.me/916909137213' // URL (used in image generation)
     ], 
 ];
 
@@ -2161,15 +2140,13 @@ ${translatedTafsirEnglish.text}`
   }
   }
   break
-
-
 			case 'animequote': {
   try {
     const res = await fetch('https://some-random-api.com/animu/quote');
     if (!res.ok) throw await res.text()
     const json = await res.json()
     const { sentence, character, anime } = json
-    const message = `✨ *Quote* ✨\n${sentence}\n\n🎭 *Character:* \`\`\`${character}\`\`\`\n🎥 *Anime:* \`\`\`${anime}\`\`\`\n`;
+    const message = `${themeemoji}Quote\n${sentence}\n\n${themeemoji}Character: \`\`\`${character}\`\`\`\n${themeemoji}Anime: \`\`\`${anime}\`\`\`\n`
     let msgs = generateWAMessageFromContent(m.chat, {
   viewOnceMessage: {
     message: {
@@ -2214,7 +2191,6 @@ return await XliconBotInc.relayMessage(m.chat, msgs.message, {})
   }
   }
   break
-
   case 'bible': {
   	const { translate } = require('@vitalets/google-translate-api')
   	const BASE_URL = 'https://bible-api.com'
@@ -2479,7 +2455,7 @@ case 'kisahnabi': {
                 + `_*📅 Date of Birth :*_ ${kisah.thn_kelahiran}\n`
                 + `_*📍 Place of Birth :*_ ${kisah.tmp}\n`
                 + `_*📊 Age :*_ ${kisah.usia}\n\n`
-                + `*— — — [ S T O R Y ] — — —*\n\n`
+                + `*— — — — — — — [ S T O R Y ] — — — — — — —*\n\n`
                 + `${kisah.description}`;
 
       // Translate the story to English before sending
@@ -3224,7 +3200,8 @@ break;
 
 case 'assalamualaikum': {
   // Prepare the response text
-  const responseText = "🌟 *Waalaikumsalam Wa Rehmatullahi Wa Barakatuhu* 🌟";
+  const responseText = "Waalaikumsalam Wa Rehmatullahi Wa Barakatuhu";
+
   // Prepare and send the reply using your bot's method
   let msgs = generateWAMessageFromContent(m.chat, {
       viewOnceMessage: {
@@ -4131,48 +4108,33 @@ break;
 
  //------------------------------------------------------------------------------------------//
 
- case 'addlist':
-  if (!XliconTheCreator) return XliconStickOwner();
-  if (!m.isGroup) return XliconStickGroup();
-  
-  var args1 = text.split("@")[0];
-  var args2 = text.split("@")[1];
-
-  if (!q.includes("@")) 
-      return replygcxlicon(`🔧 *Usage Example:* ${prefix + command} *Item Name@Item*\n\n📝 _Example_\n\n${prefix + command} namelist@List`);
-
-  if (isAlreadyResponList(m.chat, args1, db_respon_list)) 
-      return replygcxlicon(`⚠️ *List of responses with key:* *${args1}* *already in this group.*`);
-
-  if (/image/.test(mime)) {
-      media = await XliconBotInc.downloadAndSaveMediaMessage(quoted);
-      mem = await TelegraPh(media);
-      addResponList(m.chat, args1, args2, true, `${mem}`, db_respon_list);
-      replygcxlicon(`✅ *Successfully set list message with key:* *${args1}*`);
-      if (fs.existsSync(media)) fs.unlinkSync(media);
-  } else {
-      addResponList(m.chat, args1, args2, false, '-', db_respon_list);
-      replygcxlicon(`✅ *Successfully added list with key:* *${args1}*`);
-  }
-  break;
-
+  case 'addlist':
+if (!XliconTheCreator) return XliconStickOwner()
+if (!m.isGroup) return XliconStickGroup()
+var args1 = text.split("@")[0]
+var args2 = text.split("@")[1]
+if (!q.includes("@")) return replygcxlicon(`Usage Example: ${prefix+command} *Item Name@Item*\n\n_Example_\n\n${prefix+command} namelist@List`)
+if (isAlreadyResponList(m.chat, args1, db_respon_list)) return replygcxlicon(`List of responses with key : *${args1}* already in this group.`)
+if (/image/.test(mime)) {
+media = await XliconBotInc.downloadAndSaveMediaMessage(quoted)
+mem = await TelegraPh(media)
+addResponList(m.chat, args1, args2, true, `${mem}`, db_respon_list)
+replygcxlicon(`Successfully set list message with key : *${args1}*`)
+if (fs.existsSync(media)) fs.unlinkSync(media)
+} else {
+addResponList(m.chat, args1, args2, false, '-', db_respon_list)
+replygcxlicon(`Successful Add List With Key : *${args1}*`)
+}
+break
 case 'dellist':
-  if (!XliconTheCreator) return XliconStickOwner();
-  if (!m.isGroup) return XliconStickGroup();
-  
-  if (db_respon_list.length === 0) 
-      return replygcxlicon(`❌ *There is no message list in the database yet.*`);
-
-  if (!q) 
-      return replygcxlicon(`🔧 *Usage Example:* ${prefix + command} *Item name*\n\n📝 _Example_\n\n${prefix + command} listname`);
-
-  if (!isAlreadyResponList(m.chat, q, db_respon_list)) 
-      return replygcxlicon(`⚠️ *Item list by name:* *${q}* *not in the database!*`);
-
-  delResponList(m.chat, q, db_respon_list);
-  replygcxlicon(`✅ *Successfully deleted list message with key:* *${q}*`);
-  break;
-
+if (!XliconTheCreator) return XliconStickOwner()
+if (!m.isGroup) return XliconStickGroup()
+if (db_respon_list.length === 0) return replygcxlicon(`There is no message list in the database yet`)
+if (!q) return replygcxlicon(`Usage Example: ${prefix + command} *Item name*\n\n_Example_\n\n${prefix + command} listname`)
+if (!isAlreadyResponList(m.chat, q, db_respon_list)) return replygcxlicon(`Item list by Name *${q}* not in the database!`)
+delResponList(m.chat, q, db_respon_list)
+replygcxlicon(`Successfully delete list message with key *${q}*`)
+break
 case 'store':
 case 'shop': 
 case 'list': {
@@ -4184,115 +4146,94 @@ teks += `│\n└────────────⭓\n\n`
 replygcxlicon(teks)
 }
 break
-case 'setprefix':
-  if (!XliconTheCreator) return XliconStickOwner();
-  if (!text) return replygcxlicon(`🔧 *Example:* ${prefix + command} #`);
-  
-  global.xprefix = text;
-  replygcxlicon(`✅ *Prefix successfully changed to:* ${text}`);
-  break;
+			case 'setprefix':
+                if (!XliconTheCreator) return XliconStickOwner()
+                if (!text) return replygcxlicon(`Example : ${prefix + command} #`)
+                global.xprefix = text
+                replygcxlicon(`Prefix successfully changed to ${text}`)
+                break
+			case 'addmsg': {
+	if (!XliconTheCreator) return XliconStickOwner()
+                if (!m.quoted) return replygcxlicon('Reply Message You Want To Save In Database')
+                if (!text) return replygcxlicon(`Example : ${prefix + command} filename`)
+                let msgs = global.db.database
+                if (text.toLowerCase() in msgs) return replygcxlicon(`'${text}' registered in the message list`)
+                msgs[text.toLowerCase()] = quoted.fakeObj
+replygcxlicon(`Successfully added message in message list as '${text}'
+    
+Access with ${prefix}getmsg ${text}
 
-case 'addmsg': {
-  if (!XliconTheCreator) return XliconStickOwner();
-  if (!m.quoted) return replygcxlicon('📥 *Reply to the message you want to save in the database.*');
-  if (!text) return replygcxlicon(`🔧 *Example:* ${prefix + command} filename`);
-  
-  let msgs = global.db.database;
-  if (text.toLowerCase() in msgs) return replygcxlicon(`⚠️ *'${text}' is already registered in the message list.*`);
-  
-  msgs[text.toLowerCase()] = quoted.fakeObj;
-  replygcxlicon(`✅ *Successfully added message to the message list as:* '${text}'\n\n🔍 *Access with:* ${prefix}getmsg ${text}\n\n📜 *View list of messages with:* ${prefix}listmsg`);
-}
-break;
-
-case 'getmsg': {
-  if (!text) return replygcxlicon(`🔧 *Example:* ${prefix + command} file name\n\n📜 *View list of messages with:* ${prefix}listmsg`);
-  
-  let msgs = global.db.database;
-  if (!(text.toLowerCase() in msgs)) return replygcxlicon(`⚠️ *'${text}' not listed in the message list.*`);
-  
-  XliconBotInc.copyNForward(m.chat, msgs[text.toLowerCase()], true);
-}
-break;
-
-case 'listmsg': {
-  let msgs = JSON.parse(fs.readFileSync('./database/database.json'));
-  let seplit = Object.entries(global.db.database).map(([nama, isi]) => { return { nama, ...isi } });
-  let teks = '📋 *DATABASE LIST*\n\n';
-  
-  for (let i of seplit) {
-      teks += `◉ *Name:* ${i.nama}\n◉ *Type:* ${getContentType(i.message).replace(/Message/i, '')}\n────────────────────────\n\n`;
-  }
-  
-  replygcxlicon(teks);
-}
-break;
-
-case 'delmsg': case 'deletemsg': {
-  if (!XliconTheCreator) return XliconStickOwner();
-  
-  let msgs = global.db.database;
-  if (!(text.toLowerCase() in msgs)) return replygcxlicon(`⚠️ *'${text}' not listed in the message list.*`);
-  
-  delete msgs[text.toLowerCase()];
-  replygcxlicon(`✅ *Successfully deleted '${text}' from the message list.*`);
-}
-break;
-
-case 'setcmd': {
-  if (!m.quoted) return replygcxlicon('📩 *Reply to the message!*');
-  if (!m.quoted.fileSha256) return replygcxlicon('⚠️ *SHA256 Hash Missing*');
-  if (!text) return replygcxlicon(`🔧 *For What Command?*`);
-
-  let hash = m.quoted.fileSha256.toString('base64');
-  if (global.db.sticker[hash] && global.db.sticker[hash].locked) return replygcxlicon('🚫 *You have no permission to change this sticker command*');
-  
-  global.db.sticker[hash] = {
-      text,
-      mentionedJid: m.mentionedJid,
-      creator: m.sender,
-      at: +new Date(),
-      locked: false,
-  };
-  
-  replygcxlicon(`✅ *Done!*`);
-}
-break;
-
+View list of Messages With ${prefix}listmsg`)
+            }
+            break
+            case 'getmsg': {
+                if (!text) return replygcxlicon(`Example : ${prefix + command} file name\n\nView list of messages with ${prefix}listmsg`)
+                let msgs = global.db.database
+                if (!(text.toLowerCase() in msgs)) return replygcxlicon(`'${text}' not listed in the message list`)
+                XliconBotInc.copyNForward(m.chat, msgs[text.toLowerCase()], true)
+            }
+            break
+            case 'listmsg': {
+                let msgs = JSON.parse(fs.readFileSync('./database/database.json'))
+	        let seplit = Object.entries(global.db.database).map(([nama, isi]) => { return { nama, ...isi } })
+		let teks = ' DATABASE LIST \n\n'
+		for (let i of seplit) {
+		    teks += `${themeemoji} *Name :* ${i.nama}\n${themeemoji} *Type :* ${getContentType(i.message).replace(/Message/i, '')}\n────────────────────────\n\n`
+	        }
+	        replygcxlicon(teks)
+	    }
+	    break 
+	case 'delmsg': case 'deletemsg': {
+		if (!XliconTheCreator) return XliconStickOwner()
+	        let msgs = global.db.database
+	        if (!(text.toLowerCase() in msgs)) return replygcxlicon(`'${text}' not listed in the message list`)
+		delete msgs[text.toLowerCase()]
+		replygcxlicon(`Successfully deleted '${text}' from the message list`)
+            }
+	    break
+			case 'setcmd': {
+                if (!m.quoted) return replygcxlicon('Reply Message!')
+                if (!m.quoted.fileSha256) return replygcxlicon('SHA256 Hash Missing')
+                if (!text) return replygcxlicon(`For What Command?`)
+                let hash = m.quoted.fileSha256.toString('base64')
+                if (global.db.sticker[hash] && global.db.sticker[hash].locked) return replygcxlicon('You have no permission to change this sticker command')
+                global.db.sticker[hash] = {
+                    text,
+                    mentionedJid: m.mentionedJid,
+                    creator: m.sender,
+                    at: + new Date,
+                    locked: false,
+                }
+                replygcxlicon(`Done!`)
+            }
+            break
 case 'delcmd': {
-  if (!m.quoted) return replygcxlicon('📩 *Reply to the message!*');
-  
-  let hash = m.quoted.fileSha256.toString('base64');
-  if (!hash) return replygcxlicon(`⚠️ *No hashes*`);
-  if (global.db.sticker[hash] && global.db.sticker[hash].locked) return replygcxlicon('🚫 *You have no permission to delete this sticker command*');
-  
-  delete global.db.sticker[hash];
-  replygcxlicon(`✅ *Done!*`);
-}
-break;
-
+                let hash = m.quoted.fileSha256.toString('base64')
+                if (!hash) return replygcxlicon(`No hashes`)
+                if (global.db.sticker[hash] && global.db.sticker[hash].locked) return replygcxlicon('You have no permission to delete this sticker command')             
+                delete global.db.sticker[hash]
+                replygcxlicon(`Done!`)
+            }
+            break
 case 'listcmd': {
-  let teks = `📜 *List Hash*\n⚠️ *Info:* *bold* hash is Locked\n${Object.entries(global.db.sticker).map(([key, value], index) => `${index + 1}. ${value.locked ? `*${key}*` : key} : ${value.text}`).join('\n')}`;
-  
-  XliconBotInc.sendText(m.chat, teks, m, {
-      mentions: Object.values(global.db.sticker).map(x => x.mentionedJid).reduce((a, b) => [...a, ...b], [])
-  });
-}
-break;
-
+                let teks = `
+*List Hash*
+Info: *bold* hash is Locked
+${Object.entries(global.db.sticker).map(([key, value], index) => `${index + 1}. ${value.locked ? `*${key}*` : key} : ${value.text}`).join('\n')}
+`.trim()
+                XliconBotInc.sendText(m.chat, teks, m, { mentions: Object.values(global.db.sticker).map(x => x.mentionedJid).reduce((a,b) => [...a, ...b], []) })
+            }
+            break 
 case 'lockcmd': {
-  if (!XliconTheCreator) return XliconStickOwner();
-  if (!m.quoted) return replygcxlicon('📩 *Reply to the message!*');
-  if (!m.quoted.fileSha256) return replygcxlicon('⚠️ *SHA256 Hash Missing*');
-
-  let hash = m.quoted.fileSha256.toString('base64');
-  if (!(hash in global.db.sticker)) return replygcxlicon('⚠️ *Hash not found in database*');
-  
-  global.db.sticker[hash].locked = !/^un/i.test(command);
-  replygcxlicon('✅ *Done!*');
-}
-break;
-
+                if (!XliconTheCreator) return XliconStickOwner()
+                if (!m.quoted) return replygcxlicon('Reply Message!')
+                if (!m.quoted.fileSha256) return replygcxlicon('SHA256 Hash Missing')
+                let hash = m.quoted.fileSha256.toString('base64')
+                if (!(hash in global.db.sticker)) return replygcxlicon('Hash not found in database')
+                global.db.sticker[hash].locked = !/^un/i.test(command)
+                replygcxlicon('Done!')
+            }
+            break
 			case 'hentaivid': case 'hentai': case 'hentaivideo': {
 	if (!m.isGroup) return XliconStickGroup()
 if (!AntiNsfw) return replygcxlicon(mess.nsfw)
@@ -4342,7 +4283,6 @@ return await XliconBotInc.relayMessage(m.chat, msgs.message, {})
                 
             }
             break
-            
 case 'trap' :{
 if (!m.isGroup) return XliconStickGroup()
 if (!AntiNsfw) return replygcxlicon(mess.nsfw)
@@ -7630,126 +7570,88 @@ return await XliconBotInc.relayMessage(m.chat, msgs.message, {})
 return await XliconBotInc.relayMessage(m.chat, msgs.message, {})
             }
             break
-                
-case 'traceanime': 
-case 'sauce': {
-  try {
+			case 'traceanime': {
+	try {
     let q = m.quoted ? m.quoted : m;
     let mime = (q.msg || q).mimetype || q.mediaType || "";
-    
-    // Check if the media type is an image
     if (!mime.startsWith('image')) {
-      return replygcxlicon("❌ *Respond to an image!* 🖼️");
+      return replygcxlicon("*Respond to an image*");
     }
-    
-    // Download the image buffer
     let data = await q.download();
-
-    // Get the file extension from the buffer
-    const { ext } = await fileType.fromBuffer(data);
-    if (!ext) throw new Error("Unsupported file type");
-
-    // Check the file size (in MB)
-    const fileSizeMB = data.length / (1024 * 1024);
-    if (fileSizeMB > 200) { // 200MB is the limit
-      throw new Error(`File size exceeds the limit of 200MB.`);
-    }
-
-    // Prepare form data for the file upload
-    const bodyForm = new FormData();
-    bodyForm.append("fileToUpload", data, "file." + ext);
-    bodyForm.append("reqtype", "fileupload");
-
-    // Perform the POST request to upload the file to Catbox
-    const res = await fetch("https://catbox.moe/user/api.php", {
-      method: "POST",
-      body: bodyForm,
-    });
-
-    // Check if the request was successful
-    if (!res.ok) {
-      throw new Error(`Upload failed with status ${res.status}: ${res.statusText}`);
-    }
-
-    // Get the URL of the uploaded file
-    const imageUrl = await res.text();
-
-    // Now use the uploaded image URL to query the Trace.moe API
-    let apiUrl = `https://api.trace.moe/search?anilistInfo&url=${encodeURIComponent(imageUrl)}`;
+    let image = await uploadImage(data);
+    let apiUrl = `https://api.trace.moe/search?anilistInfo&url=${encodeURIComponent(image)}`;
     console.log("API URL:", apiUrl);
-
-    // Fetch the response from Trace.moe API
     let response = await fetch(apiUrl);
     let result = await response.json();
-
+    console.log("API Response:", result);
     if (!result || result.error || result.result.length === 0) {
-      return replygcxlicon("⚠️ *Error: Could not track the anime.* ❌");
+      return replygcxlicon("*Error: Could not track the anime.*");
     }
-
-    // Parse the result and prepare the message
     let { anilist, from, to, similarity, video, episode } = result.result[0];
     let animeTitle = anilist.title ? anilist.title.romaji || anilist.title.native : "Unknown Title";
-    let message = `📺 *Anime:* ${animeTitle}\n`;
-
+    let message = `*Anime:* ${animeTitle}\n`;
     if (anilist.synonyms && anilist.synonyms.length > 0) {
-      message += `📝 *Synonyms:* ${anilist.synonyms.join(", ")}\n`;
+      message += `*Synonyms:* ${anilist.synonyms.join(", ")}\n`;
     }
-    message += `🔍 *Similarity:* ${similarity.toFixed(2)}%\n`;
-    message += `⏳ *Time:* ${formatDuration(from * 1000)} - ${formatDuration(to * 1000)}\n`;
-
+    message += `*Similarity:* ${similarity.toFixed(2)}%\n`;
+    message += `*Time:* ${formatDuration(from * 1000)} - ${formatDuration(to * 1000)}\n`;
     if (episode) {
-      message += `🎥 *Episode:* ${episode}\n`;
+      message += `*Episode:* ${episode}\n`;
     }
-
+    console.log("Anime Information:", {
+      animeTitle,
+      synonyms: anilist.synonyms ? anilist.synonyms.join(", ") : "Not Available",
+      similarity,
+      timestamp: `${formatDuration(from * 1000)} - ${formatDuration(to * 1000)}`,
+      video,
+      episode,
+    });
     // Send the video with anime information as the caption
     let msgs = generateWAMessageFromContent(m.chat, {
-      viewOnceMessage: {
-        message: {
-          "messageContextInfo": {
-            "deviceListMetadata": {},
-            "deviceListMetadataVersion": 2
-          },
-          interactiveMessage: proto.Message.InteractiveMessage.create({
-            body: proto.Message.InteractiveMessage.Body.create({
-              text: message
-            }),
-            footer: proto.Message.InteractiveMessage.Footer.create({
-              text: botname
-            }),
-            header: proto.Message.InteractiveMessage.Header.create({
-              hasMediaAttachment: false,
-              ...await prepareWAMessageMedia({ video: { url: video } }, { upload: XliconBotInc.waUploadToServer })
-            }),
-            nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
-              buttons: [{
-                "name": "quick_reply",
-                "buttonParamsJson": `{\"display_text\":\"👀 View More\",\"id\":\"\"}`
-              }],
-            }),
-            contextInfo: {
-              mentionedJid: [m.sender], 
-              forwardingScore: 999,
-              isForwarded: true,
-              forwardedNewsletterMessageInfo: {
-                newsletterJid: '120363232303807350@newsletter',
-                newsletterName: ownername,
-                serverMessageId: 143
-              }
-            }
-          })
-        }
-      }
-    }, { quoted: m });
-
-    await XliconBotInc.relayMessage(m.chat, msgs.message, {});
+  viewOnceMessage: {
+    message: {
+        "messageContextInfo": {
+          "deviceListMetadata": {},
+          "deviceListMetadataVersion": 2
+        },
+        interactiveMessage: proto.Message.InteractiveMessage.create({
+          body: proto.Message.InteractiveMessage.Body.create({
+            text: message
+          }),
+          footer: proto.Message.InteractiveMessage.Footer.create({
+            text: botname
+          }),
+          header: proto.Message.InteractiveMessage.Header.create({
+          hasMediaAttachment: false,
+          ...await prepareWAMessageMedia({video: {url: video}}, { upload: XliconBotInc.waUploadToServer })
+          }),
+          nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+            buttons: [{
+            "name": "quick_reply",
+              "buttonParamsJson": `{\"display_text\":\"👀\",\"id\":\"\"}`
+            }],
+          }),
+          contextInfo: {
+                  mentionedJid: [m.sender], 
+                  forwardingScore: 999,
+                  isForwarded: true,
+                forwardedNewsletterMessageInfo: {
+                  newsletterJid: '120363232303807350@newsletter',
+                  newsletterName: ownername,
+                  serverMessageId: 143
+                }
+                }
+       })
+    }
+  }
+}, { quoted: m })
+await XliconBotInc.relayMessage(m.chat, msgs.message, {})
   } catch (error) {
     console.error("Error:", error);
-    replygcxlicon("⚠️ *Error: Could not track the anime or send the video.* ❌");
+    replygcxlicon("*Error: Could not track the anime or send the video.*");
   }
 };
-break;
-
-
+break
 			case 'shinobu':{
 axios.get(`https://api.waifu.pics/sfw/shinobu`)
 .then(({data}) => {
@@ -20412,7 +20314,6 @@ case 'song2': {
 break;
 
 
-
                
 //--------------------------------------------------------------------------------------------------//
 
@@ -21057,7 +20958,6 @@ case 'ytv2': {
     }
 }
 break;
-
 
 //----------------------------------------------------------------------------------------------//
 

@@ -13,7 +13,7 @@
   "author": "Salman-Ahmad",
   "license": "MIT",
   "dependencies": {
-    "@whiskeysockets/baileys" : "^6.7.7",
+    "@whiskeysockets/baileys" : "latest",
     "@adiwajshing/keyed-db": "^0.2.4",
     "@bochilteam/scraper": "^4.2.4",
     "@develoka/angka-terbilang-js": "^1.4.2",
@@ -29,6 +29,7 @@
     "brainly-scraper": "^1.0.3",
     "cfonts": "^3.1.1",
     "chalk": "^4.1.2",
+    "figlet":"^1.5.2",   
     "cheerio": "^1.0.0-rc.10",
     "colors": "^1.4.0",
     "cookie": "^0.5.0",

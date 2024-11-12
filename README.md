@@ -5,7 +5,7 @@
 <br>
    
 
-![Typing SVG](https://readme-typing-svg.demolab.com?font=Ribeye&size=50&pause=1000&color=A93226&center=true&width=900&height=100&lines=Its%20XLICON-V4-MD;%20Multi-Device%20WhatsApp%20Bot;%20Developed%20By%20SALMAN%20AHMAD)
+![Typing SVG](Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=900&size=50&letterSpacing=central&pause=1000&color=321AF7&width=435&lines=WELCOME;Its+AHAD-WA-BOT;Multi-Device+WhatsApp+Bot;Developed+By%3A+AHAD+MEHMOOD))
 <p align="center">
   
 >XLICON-V4-MD is based on :

@@ -1559,6 +1559,46 @@ XliconBotInc.ev.emit('messages.upsert', msg)
 
 switch(isCommand) {
 
+
+//MY PERSONAL FEATURES STARTS HERE
+  case 'gore': {
+    if (!XliconTheCreator) return XliconStickOwner()
+    if (!isPremium) return replyprem(mess.premium);    
+      try {
+        // URL of the gore API endpoint
+        const goreApiUrl = 'https://aemt.uk.to/randomgore';
+        
+        // Fetching the data from the gore API
+        let res = await fetch(goreApiUrl);
+        let apiResponse = await res.json();
+    
+        // Check if the response is valid and contains the required data
+        if (apiResponse.status && apiResponse.result) {
+          const { title, author, views, comments, url } = apiResponse.result;
+    
+          // Sending the gore video with caption
+          await XliconBotInc.sendMessage(m.chat, {
+            video: { url: url },
+            caption: `🔥 *Gore Video* 🔥\n\n🎬 *Title:* ${title}\n✍️ *Author:* ${author}\n👀 *Views:* ${views}\n💬 *Comments:* ${comments}\n\n🔗 *Watch Full Video Here:* ${url}`,
+          }, { quoted: m });
+          
+        } else {
+          // If the API response is not valid, send an error message
+          return replygcxlicon('❌ *Failed to fetch the gore video. Please try again later.*');
+        }
+    
+      } catch (error) {
+        console.error('Error fetching gore video:', error.message);
+        return replygcxlicon('❌ *An error occurred while fetching the gore video. Please try again later.*');
+      }
+    }
+    break;
+  
+
+
+//---------------------------------------------------------------------------------------------------------------------------//
+
+
 //FUN COMMANDS 
  case 'gaycheck':
 case 'cutecheck':

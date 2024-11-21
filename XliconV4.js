@@ -39,7 +39,7 @@
 //CODE TO HANDLE ERRORS
 process.on('unhandledRejection', console.error)
 process.on('uncaughtException', console.error)
-process.setMaxListeners(200);
+process.setMaxListeners(500);
 //---------------------------------------------------------------------------------------------------------------------------//
 
 //MODULE EXPOERTS AND REQUIREMENTS 
@@ -72,7 +72,6 @@ const moment = require('moment-timezone');
 const { exec, spawn, execSync } = require('child_process');
 const googleTTS = require('google-tts-api');
 const PDFDocument = require("pdfkit");
-const { m3u8 } = require('ironman-api'); // Import m3u8 converter
 const more = String.fromCharCode(8206);
 const readmore = more.repeat(4001);
 const fsx = require('fs-extra');

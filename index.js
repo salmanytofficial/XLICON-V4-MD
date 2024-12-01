@@ -182,7 +182,6 @@ async function startXliconBot() {
     XliconBotInc.ev.on('messages.upsert', async (message) => {
         await MessagesUpsert(XliconBotInc, message, store);
     });
-
     return XliconBotInc;
 }
 

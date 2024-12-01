@@ -84,7 +84,7 @@ Click On The Link To Donate ME...
 | Logo Commands                    | Generate logos using specialized commands               | ✅           | 3.0        |
 | Anime Commands                   | Explore anime-related commands and features             | ✅           | 3.0        |
 | Bot Cantrol Commands             | Cantrol Bot Without Opening Deploy Platform             | ✅           | 3.0        |
-| Various Games                    | Enjoy a variety of games within the bot                 | ✅           | 3.0        |
+| Various Games                    | Enjoy a variety of games within the bot.                 | ✅           | 3.0        |
 | Audio/Video Editor Commands      | Edit audio and video files with bot commands            | ✅           | 3.0        |
 
 ## 🛠️ `Installation Methods`

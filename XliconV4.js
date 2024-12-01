@@ -21,7 +21,7 @@
  * 
  * @project_name XLICON-V4-MD
  * @version 4.0
- * @description XLICON-V4, A Multi-functional WhatsApp user bot.
+ * @description XLICON-V4-MD, A Multi-functional WhatsApp user bot.
  * @base DGXeon
  * @re-upload recode copy code give credit ya :)
  * @author salmanytofficial

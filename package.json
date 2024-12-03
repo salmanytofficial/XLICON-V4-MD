@@ -18,6 +18,7 @@
     "@distube/ytdl-core": "^4.13.5",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@hapi/boom": "^10.0.0",
+    "@vitalets/google-translate-api": "^9.2.0",
     "awesome-phonenumber": "^4.4.0",
     "axios": "*",
     "chalk": "^4.1.2",

@@ -138,6 +138,7 @@ async function startXliconBot() {
         }
         if (connection == 'open') {
             console.log('Connected to : ' + JSON.stringify(XliconBotInc.user, null, 2));
+            
         } else if (receivedPendingNotifications == 'true') {
             console.log('Please wait About 1 Minute...');
         }
@@ -174,6 +175,7 @@ async function startXliconBot() {
     
     XliconBotInc.ev.on('messages.upsert', async (message) => {
         await MessagesUpsert(XliconBotInc, message, store);
+        console.log(message);
     });
     return XliconBotInc;
 }

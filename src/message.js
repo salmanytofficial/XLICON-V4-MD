@@ -312,6 +312,7 @@ await XliconBotInc.sendMessage(id,
 	}
 }
 async function MessagesUpsert(XliconBotInc, message, store) {
+	console.log("Hello from MessageUpsert function");
 	try {
 		let botNumber = await XliconBotInc.decodeJid(XliconBotInc.user.id);
 		const msg = message.messages[0];
@@ -322,6 +323,7 @@ async function MessagesUpsert(XliconBotInc, message, store) {
 		if (!msg.message) return
 		const m = await Serialize(XliconBotInc, msg, store)
 		require('../XliconV4')(XliconBotInc, m, message, store);
+		console.log("Hey i'm here on line 325 in message.js file")
 		if (type === 'interactiveResponseMessage' && m.quoted && m.quoted.fromMe) {
 			let apb = await generateWAMessage(m.chat, { text: JSON.parse(m.msg.nativeFlowResponseMessage.paramsJson).id, mentions: m.mentionedJid }, {
 				userJid: XliconBotInc.user.id,
@@ -349,7 +351,7 @@ async function MessagesUpsert(XliconBotInc, message, store) {
 			}
 		}
 	} catch (e) {
-		return;
+		return e;
 	}
 }
 

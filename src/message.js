@@ -215,7 +215,7 @@ await XliconBotInc.relayMessage(id, msgs.message, {})
 				let xliconName = n
                 const xlicondate = moment.tz('Asia/Kolkata').locale('en-IN').format('DD/MM/YYYY');
                 const xlicontime = moment().tz('Asia/Kolkata').locale('en-IN').format('HH:mm:ss');
-	            const xliconmembers = metadata.participants.length
+				const xmembers = metadata.participants.length
 					xliconbody = `
 ┌─❖
 │『  *Gᴏᴏᴅʙʏᴇ..!! 🍁*  』 
@@ -271,8 +271,8 @@ let msgs = generateWAMessageFromContent(id, {
 }, {})
 await XliconBotInc.relayMessage(id, msgs.message, {})
 				} else if (action == 'promote') {
-const xlicontime = moment().tz('Asia/Kolkata').locale('en-IN').format('HH:mm:ss');
-const xlicondate = moment.tz('Asia/Kolkata').locale('en-IN').format('DD/MM/YYYY');
+const xtime = moment().tz('Asia/Kolkata').locale('en-IN').format('HH:mm:ss');
+const xdate = moment.tz('Asia/Kolkata').locale('en-IN').format('DD/MM/YYYY');
 let xliconName = n
 xliconbody = ` 𝗖𝗼𝗻𝗴𝗿𝗮𝘁🎉 @${xliconName.split("@")[0]}, you have been *promoted* to *admin* 🥳`
    await XliconBotInc.sendMessage(id,
@@ -321,7 +321,7 @@ async function MessagesUpsert(XliconBotInc, message, store) {
 		if (msg.key.id.length === 22) return
 		if (!msg.message) return
 		const m = await Serialize(XliconBotInc, msg, store)
-		require('../XliconV4')(XliconBotInc, m, message, store);
+		import('../XliconV4').then(module => module.default(XliconBotInc, m, message, store));
 		if (type === 'interactiveResponseMessage' && m.quoted && m.quoted.fromMe) {
 			let apb = await generateWAMessage(m.chat, { text: JSON.parse(m.msg.nativeFlowResponseMessage.paramsJson).id, mentions: m.mentionedJid }, {
 				userJid: XliconBotInc.user.id,
@@ -876,7 +876,7 @@ return [...text.matchAll(/@([0-9]{5,16}|0)/g)].map(v => v[1] + '@s.whatsapp.net'
 		await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, { messageId: msg.key.id });
 	}
 	
-	XliconBotInc.sendCarouselMsg = async (jid, body = '', footer = '', cards = [], options = {}) => {
+	XliconBotInc.sendCarouselMsg = async (jid, body = '', footer = '', cards = []) => {
 		async function getImageMsg(url) {
 			const { imageMessage } = await generateWAMessageContent({ image: { url } }, { upload: XliconBotInc.waUploadToServer });
 			return imageMessage;
@@ -925,7 +925,7 @@ return [...text.matchAll(/@([0-9]{5,16}|0)/g)].map(v => v[1] + '@s.whatsapp.net'
 }
 
 async function Serialize(XliconBotInc, m, store) {
-	const botNumber = XliconBotInc.decodeJid(XliconBotInc.user.id)
+	// const botNumber = XliconBotInc.decodeJid(XliconBotInc.user.id)
 	if (!m) return m
 	if (m.key) {
 		m.id = m.key.id

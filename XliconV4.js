@@ -23,7 +23,7 @@
  * @version 4.0
  * @description XLICON-V4, A Multi-functional WhatsApp user bot.
  * @base DGXeon
- * @re-upload recode copy code give credit ya :)
+ * @re-upload recode copy code give credit ya :
  * @author salmanytofficial
  * @youtube https://www.youtube.com/@s4salmanyt
  * @instagram ahmmikun

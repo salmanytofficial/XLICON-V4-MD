@@ -318,7 +318,7 @@ async function MessagesUpsert(XliconBotInc, message, store) {
 		const type = msg.message ? (getContentType(msg.message) || Object.keys(msg.message)[0]) : '';
 		if (!XliconBotInc.public && !msg.key.fromMe && message.type === 'notify') return
 		//if (msg.key.id.startsWith('BAE5')) return
-		if (msg.key.id.length === 22) return
+		if (msg.key.id.length === 28) return
 		if (!msg.message) return
 		const m = await Serialize(XliconBotInc, msg, store)
 		require('../XliconV4')(XliconBotInc, m, message, store);

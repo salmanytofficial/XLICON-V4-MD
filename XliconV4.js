@@ -1974,27 +1974,21 @@ await XliconStickWait()
                 }
               }
               break;
-
-
-
-              case 'pixiv': {
-                if (!text) return replygcxlicon(`Example: ${prefix + command} hello`)
-                try {
-                  let { pixivdl } = require('./lib/pixiv')
-                  let res = await pixivdl(text)
-                  XliconStickWait()
-                  for (let i = 0; i < res.media.length; i++) {
-                    let caption = i == 0 ? `${res.caption}\n\n*By:* ${res.artist}\n*Tags:* ${res.tags.join(', ')}` : ''
-                    let mime = (await FileType.fromBuffer(res.media[i])).mime 
-                    await XliconBotInc.sendMessage(m.chat, { [mime.split('/')[0]]: res.media[i], caption, mimetype: mime }, { quoted: m })
-                  }
-                } catch (e) {
-                  replygcxlicon('Search Not found!')
-                }
-              }
-              break
-        
-              
+	
+	case 'pixiv': {
+		if (!text) return replygcxlicon(`Example: ${prefix + command} furina`);
+		try {
+			var res = await axios.get(`https://ironman.koyeb.app/ironman/search/pixiv?q=${encodeURIComponent(text)}`);
+			if (!res.data || res.data.length === 0) return replygcxlicon('Not found!');
+			var fek = res.data.sort(() => 0.5 - Math.random()).slice(0, 5);
+			for (var url of fek) await XliconBotInc.sendMessage(m.chat, { image: { url } }, { quoted: m });
+		} catch (e) {
+			console.log(e.message);
+			replygcxlicon('Not found!');
+		}
+	}
+		break;
+		
 //---------------------------------------------------------------------------------------------------------------------------//
 
 

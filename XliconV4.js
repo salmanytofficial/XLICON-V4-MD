@@ -23,7 +23,7 @@
  * @version 4.0
  * @description XLICON-V4, A Multi-functional WhatsApp user bot.
  * @base DGXeon
- * @re-upload recode copy code give credit ya :)
+ * @re-upload recode copy code give credit ya :
  * @author salmanytofficial
  * @youtube https://www.youtube.com/@s4salmanyt
  * @instagram ahmmikun
@@ -1981,7 +1981,9 @@ await XliconStickWait()
 			var res = await axios.get(`https://ironman.koyeb.app/ironman/search/pixiv?q=${encodeURIComponent(text)}`);
 			if (!res.data || res.data.length === 0) return replygcxlicon('Not found!');
 			var fek = res.data.sort(() => 0.5 - Math.random()).slice(0, 5);
-			for (var url of fek) await XliconBotInc.sendMessage(m.chat, { image: { url } }, { quoted: m });
+			for (var imageUrl1 of fek) {
+        await XliconBotInc.sendMessage(m.chat, { image: { url: imageUrl1 } }, { quoted: m });
+    }
 		} catch (e) {
 			console.log(e.message);
 			replygcxlicon('Not found!');

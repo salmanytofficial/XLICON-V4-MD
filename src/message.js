@@ -215,7 +215,7 @@ await XliconBotInc.relayMessage(id, msgs.message, {})
 				let xliconName = n
                 const xlicondate = moment.tz('Asia/Kolkata').locale('en-IN').format('DD/MM/YYYY');
                 const xlicontime = moment().tz('Asia/Kolkata').locale('en-IN').format('HH:mm:ss');
-	            const xliconmembers = metadata.participants.length
+				const xmembers = metadata.participants.length
 					xliconbody = `
 ┌─❖
 │『  *Gᴏᴏᴅʙʏᴇ..!! 🍁*  』 
@@ -271,8 +271,8 @@ let msgs = generateWAMessageFromContent(id, {
 }, {})
 await XliconBotInc.relayMessage(id, msgs.message, {})
 				} else if (action == 'promote') {
-const xlicontime = moment().tz('Asia/Kolkata').locale('en-IN').format('HH:mm:ss');
-const xlicondate = moment.tz('Asia/Kolkata').locale('en-IN').format('DD/MM/YYYY');
+const xtime = moment().tz('Asia/Kolkata').locale('en-IN').format('HH:mm:ss');
+const xdate = moment.tz('Asia/Kolkata').locale('en-IN').format('DD/MM/YYYY');
 let xliconName = n
 xliconbody = ` 𝗖𝗼𝗻𝗴𝗿𝗮𝘁🎉 @${xliconName.split("@")[0]}, you have been *promoted* to *admin* 🥳`
    await XliconBotInc.sendMessage(id,
@@ -312,47 +312,77 @@ await XliconBotInc.sendMessage(id,
 	}
 }
 async function MessagesUpsert(XliconBotInc, message, store) {
-	console.log("Hello from MessageUpsert function");
-	try {
-		let botNumber = await XliconBotInc.decodeJid(XliconBotInc.user.id);
-		const msg = message.messages[0];
-		const type = msg.message ? (getContentType(msg.message) || Object.keys(msg.message)[0]) : '';
-		if (!XliconBotInc.public && !msg.key.fromMe && message.type === 'notify') return
-		if (msg.key.id.startsWith('BAE5')) return
-		if (msg.key.id.length === 22) return
-		if (!msg.message) return
-		const m = await Serialize(XliconBotInc, msg, store)
-		require('../XliconV4')(XliconBotInc, m, message, store);
-		console.log("Hey i'm here on line 325 in message.js file")
-		if (type === 'interactiveResponseMessage' && m.quoted && m.quoted.fromMe) {
-			let apb = await generateWAMessage(m.chat, { text: JSON.parse(m.msg.nativeFlowResponseMessage.paramsJson).id, mentions: m.mentionedJid }, {
-				userJid: XliconBotInc.user.id,
-				quoted: m.quoted
-			});
-			apb.key = msg.key
-			apb.key.fromMe = areJidsSameUser(m.sender, XliconBotInc.user.id);
-			if (m.isGroup) apb.participant = m.sender;
-			let pbr = {
-				...msg,
-				messages: [proto.WebMessageInfo.fromObject(apb)],
-				type: 'append'
-			}
-			XliconBotInc.ev.emit('messages.upsert', pbr);
-		}
-		let antiswview = global.db.settings[botNumber].antiswview
-		if (antiswview) {
-			if (msg.key.remoteJid === 'status@broadcast') {
-				await XliconBotInc.readMessages([msg.key]);
-				if (/protocolMessage/i.test(type)) XliconBotInc.sendFromOwner(ownernumber, 'Status from @' + msg.key.participant.split('@')[0] + ' Was removed', msg, { mentions: [msg.key.participant] });
-				if (/(audioMessage|imageMessage|videoMessage|extendedTextMessage)/i.test(type)) {
-					let keke = (type == 'extendedTextMessage') ? `Story Caption : ${msg.message.extendedTextMessage.text ? msg.message.extendedTextMessage.text : ''}` : (type == 'imageMessage') ? `Image Story ${msg.message.imageMessage.caption ? 'with caption : ' + msg.message.imageMessage.caption : ''}` : (type == 'videoMessage') ? `Video Story ${msg.message.videoMessage.caption ? 'with caption : ' + msg.message.videoMessage.caption : ''}` : (type == 'audioMessage') ? 'Audio Story' : `\nIt's not known, just check directly`
-					await XliconBotInc.sendFromOwner(ownernumber, `Story from @${msg.key.participant.split('@')[0]}\n${keke}`, msg, { mentions: [msg.key.participant] });
-				}
-			}
-		}
-	} catch (e) {
-		return e;
-	}
+    console.log("Hello from MessageUpsert function");
+    try {
+        console.log("Entered in try statement!");
+
+        let botNumber = await XliconBotInc.decodeJid(XliconBotInc.user.id);
+        console.log("Decoded JID:", botNumber);
+
+        const msg = message.messages[0];
+        console.log("Message object:", msg);
+
+        const type = msg.message ? (getContentType(msg.message) || Object.keys(msg.message)[0]) : '';
+        console.log("Message type:", type);
+
+        if (!XliconBotInc.public && !msg.key.fromMe && message.type === 'notify') {
+            console.log("Exiting: not public, not from me, and notify type");
+            return;
+        }
+        if (msg.key.id.startsWith('BAE5')) {
+            console.log("Exiting: message ID starts with BAE5");
+            return;
+        }
+        if (msg.key.id.length === 22) {
+            console.log("Exiting: message ID length is 22");
+            return;
+        }
+        if (!msg.message) {
+            console.log("Exiting: no message content");
+            return;
+        }
+
+        const m = await Serialize(XliconBotInc, msg, store);
+        console.log("Serialized message:", m);
+
+        require('../XliconV4')(XliconBotInc, m, message, store);
+
+        if (type === 'interactiveResponseMessage' && m.quoted && m.quoted.fromMe) {
+            let apb = await generateWAMessage(m.chat, { text: JSON.parse(m.msg.nativeFlowResponseMessage.paramsJson).id, mentions: m.mentionedJid }, {
+                userJid: XliconBotInc.user.id,
+                quoted: m.quoted
+            });
+            apb.key = msg.key;
+            apb.key.fromMe = areJidsSameUser(m.sender, XliconBotInc.user.id);
+            if (m.isGroup) apb.participant = m.sender;
+            let pbr = {
+                ...msg,
+                messages: [proto.WebMessageInfo.fromObject(apb)],
+                type: 'append'
+            };
+            XliconBotInc.ev.emit('messages.upsert', pbr);
+        }
+
+        let antiswview = global.db.settings[botNumber].antiswview;
+        console.log("antiswview setting:", antiswview);
+
+        if (antiswview) {
+            if (msg.key.remoteJid === 'status@broadcast') {
+                await XliconBotInc.readMessages([msg.key]);
+                if (/protocolMessage/i.test(type)) {
+                    XliconBotInc.sendFromOwner(ownernumber, 'Status from @' + msg.key.participant.split('@')[0] + ' Was removed', msg, { mentions: [msg.key.participant] });
+                }
+                if (/(audioMessage|imageMessage|videoMessage|extendedTextMessage)/i.test(type)) {
+                    let keke = (type == 'extendedTextMessage') ? `Story Caption : ${msg.message.extendedTextMessage.text ? msg.message.extendedTextMessage.text : ''}` : (type == 'imageMessage') ? `Image Story ${msg.message.imageMessage.caption ? 'with caption : ' + msg.message.imageMessage.caption : ''}` : (type == 'videoMessage') ? `Video Story ${msg.message.videoMessage.caption ? 'with caption : ' + msg.message.videoMessage.caption : ''}` : (type == 'audioMessage') ? 'Audio Story' : `\nIt's not known, just check directly`;
+                    XliconBotInc.sendFromOwner(ownernumber, `Story from @${msg.key.participant.split('@')[0]}\n${keke}`, msg, { mentions: [msg.key.participant] });
+                }
+            }
+        }
+    } catch (e) {
+        console.log("An error occurred: " + e.message);
+        console.log("Stack trace: " + e.stack);
+        return console.log(e);
+    }
 }
 
 async function Solving(XliconBotInc, store) {
@@ -878,7 +908,7 @@ return [...text.matchAll(/@([0-9]{5,16}|0)/g)].map(v => v[1] + '@s.whatsapp.net'
 		await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, { messageId: msg.key.id });
 	}
 	
-	XliconBotInc.sendCarouselMsg = async (jid, body = '', footer = '', cards = [], options = {}) => {
+	XliconBotInc.sendCarouselMsg = async (jid, body = '', footer = '', cards = []) => {
 		async function getImageMsg(url) {
 			const { imageMessage } = await generateWAMessageContent({ image: { url } }, { upload: XliconBotInc.waUploadToServer });
 			return imageMessage;
@@ -927,7 +957,7 @@ return [...text.matchAll(/@([0-9]{5,16}|0)/g)].map(v => v[1] + '@s.whatsapp.net'
 }
 
 async function Serialize(XliconBotInc, m, store) {
-	const botNumber = XliconBotInc.decodeJid(XliconBotInc.user.id)
+	// const botNumber = XliconBotInc.decodeJid(XliconBotInc.user.id)
 	if (!m) return m
 	if (m.key) {
 		m.id = m.key.id

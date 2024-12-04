@@ -103,7 +103,7 @@ async function startXliconBot() {
         if (useMobile) throw new Error('Cannot use pairing code with mobile API');
 
         let phoneNumber;
-        phoneNumber = await question('Please enter your number starting with 92 :\n');
+        phoneNumber = await question('Please enter your number starting with country code like 92:\n');
         phoneNumber = phoneNumber.trim();
 
         setTimeout(async () => {

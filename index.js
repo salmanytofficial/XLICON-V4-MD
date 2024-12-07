@@ -1,10 +1,12 @@
 require('./settings');
 const fs = require('fs');
 const pino = require('pino');
+const { color } = require('./lib/color');
 const path = require('path');
 const axios = require('axios');
 const chalk = require('chalk');
 const readline = require('readline');
+const { File } = require('megajs');
 const FileType = require('file-type');
 const { exec } = require('child_process');
 const { Boom } = require('@hapi/boom');
@@ -49,6 +51,40 @@ const database = new DataBase();
 const { GroupUpdate, GroupParticipantsUpdate, MessagesUpsert, Solving } = require('./src/message');
 const { imageToWebp, videoToWebp, writeExifImg, writeExifVid } = require('./lib/exif');
 const { isUrl, generateMessageTag, getBuffer, getSizeMedia, fetchJson, await, sleep } = require('./lib/function');
+
+
+const sessionDir = path.join(__dirname, 'session');
+const credsPath = path.join(sessionDir, 'creds.json');
+
+async function sessionLoader() {
+  try {
+    // Ensure session directory exists
+    await fs.promises.mkdir(sessionDir, { recursive: true });
+
+    if (!fs.existsSync(credsPath)) {
+      if (!global.SESSION_ID) {
+      return console.log(color(`Session id and creds.json not found!!\n\nWait to enter your number`, 'red'));
+      }
+
+      const sessionData = global.SESSION_ID.split("XLICON-V4~")[1];
+      const filer = File.fromURL(`https://mega.nz/file/${sessionData}`);
+
+      await new Promise((resolve, reject) => {
+        filer.download((err, data) => {
+          if (err) reject(err);
+          resolve(data);
+        });
+      })
+      .then(async (data) => {
+        await fs.promises.writeFile(credsPath, data);
+        console.log(color(`Session downloaded successfully, proceeding to start...`, 'green'));
+        await startXliconBot();
+      });
+    }
+  } catch (error) {
+    console.error('Error retrieving session:', error);
+  }
+}
 
 console.log(
   chalk.cyan(`
@@ -187,8 +223,26 @@ async function startXliconBot() {
     return XliconBotInc;
 }
 
-startXliconBot();
-
+async function initStart() {
+    if (fs.existsSync(credsPath)) {
+        console.log(color("Creds.json exists, proceeding to start...", 'yellow'));
+await startXliconBot();
+} else {
+         const sessionCheck = await sessionLoader();
+        if (sessionCheck) {
+            console.log("Session downloaded successfully, proceeding to start... .");
+await startXliconBot();
+    } else {
+     if (!fs.existsSync(credsPath)) {
+    if(!global.SESSION_ID) {
+            console.log(color("Please wait for a few seconds to enter your number!", 'red'));
+await startXliconBot();
+        }
+    }
+  }
+ }
+} 
+initStart();
 let file = require.resolve(__filename);
 fs.watchFile(file, () => {
     fs.unwatchFile(file);

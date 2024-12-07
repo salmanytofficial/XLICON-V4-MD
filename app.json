@@ -1,8 +1,76 @@
+
 {
-	"name": "XLICON-V4-MD",
-	"description": "WhatsApp Bot Using Lib Baileys",
-	"repository": "https://github.com/salmanytofficial/XLICON-V4-MD",
-	"logo": "https://node-js-sample.herokuapp.com/node.png",
-	"keywords": ["multi-device"]
+  "name": "XLICON-V4-MD",
+  "description": "WhatsApp Bot Using Lib Baileys",
+  "repository": "https://github.com/salmanytofficial/XLICON-V4-MD",
+  "logo": "https://node-js-sample.herokuapp.com/node.png",
+  "keywords": ["multi-device"],
+  "stack": "container",
+  "env": {
+    "SESSION_ID": {
+      "description": "Enter session id here; must start with XLICON-V4~",
+      "required": true
+    },
+    "BOT_NAME": {
+      "value": "XLICON-V4-MD",
+      "description": "Bot Name",
+       "required": true 
+    },
+    "OWNER_NUMBER": {
+      "value": "923184070915",
+      "description": "Owner Number",
+       "required": true
+    },
+    "OWNER_NAME": {
+      "value": "𝙎𝙖𝙡𝙢𝙖𝙣 𝘼𝙝𝙢𝙖𝙙",
+      "description": "Owner Name",
+       "required": true
+    },
+    "PACK_NAME": {
+      "value": "𝘼𝙃𝙃𝙈𝙄 𝙆𝙐𝙉",
+      "description": "Sticker Package Name",
+       "required": false
+    },
+    "AUTHOR_NAME": {
+      "value": "MΛDΣ BY 𝙎𝘼𝙇𝙈𝘼𝙉 𝘼𝙃𝙈𝘼𝘿",
+      "description": "Sticker Author Name",
+       "required": false
+    },
+    "PREFIX": {
+      "value": ".",
+      "description": "Bot Prefix",
+       "required": true
+    },
+    "PREMIUM_NUMBER": {
+      "value": "923184070915",
+      "description": "Premium User IDs (comma-separated)",
+      "required": true
+    },
+    "MENU_TYPE": {
+      "value": "v2",
+      "description": "Menu Type (v1/v2)",
+       "required": false
+    },
+    "AUTOBLOCK_COUNTRYCODE": {
+      "value": "212",
+      "description": "Auto-Block Country Code",
+       "required": false
+    },
+    "ANTI_DELETE": {
+      "value": "false",
+      "description": "Anti-Delete (true to enable/false to disable)",
+       "required": false
+    },
+    "ANTIFOREIGN_COUNTRYCODE": {
+      "value": "91",
+      "description": "Anti-Foreign Number Country Code",
+       "required": false
+    }
+  },
+  "buildpacks": [
+    { "url": "heroku/nodejs" },
+    { "url": "https://github.com/DuckyTeam/heroku-buildpack-imagemagick.git" },
+    { "url": "https://github.com/jonathanong/heroku-buildpack-ffmpeg-latest" },
+    { "url": "https://github.com/clhuang/heroku-buildpack-webp-binaries.git" }
+  ]
 }
-                  

@@ -1,21 +1,23 @@
+FROM node:lts
 
-FROM node:lts-buster
+# Install dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg imagemagick webp && apt-get clean
 
-RUN apt-get update && \
-  apt-get install -y \
-  ffmpeg \
-  imagemagick \
-  webp && \
-  apt-get upgrade -y && \
-  rm -rf /var/lib/apt/lists/*
+# Set working directory
+WORKDIR /app
 
-COPY package.json .
+# Copy package files
+COPY package*.json ./
 
-RUN npm install && npm install qrcode-terminal
+# Install dependencies
+RUN npm install && npm cache clean --force
+RUN npm install -g pm2
 
+# Copy application code
 COPY . .
 
-EXPOSE 3000
+# Set environment
+ENV NODE_ENV production
 
-CMD ["node", "index.js", "--server"]
-              
+# Run command
+CMD ["npm", "run", "start"]

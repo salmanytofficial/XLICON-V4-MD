@@ -36,16 +36,6 @@
 // */
 
 //~~~~~~~~~~~~~~~< SETTINGS >~~~~~~~~~~~~~~~\\
-
-let file = require.resolve(__filename)
-fs.watchFile(file, () => {
-	fs.unwatchFile(file)
-	console.log(chalk.redBright(`Updated ${__filename}`))
-	delete require.cache[file]
-	require(file)
-});
-
-
 const fs = require('fs');
 const chalk = require('chalk');
 

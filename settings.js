@@ -35,74 +35,7 @@
 // ⛥┌┤
 // */
 
-const fs = require('fs');
-const chalk = require('chalk');
-
-//owmner v card
-global.ytname = "YT: S4 SALMAN YT" //ur yt chanel name
-global.socialm = "GitHub: salmanytofficial" //ur github or insta name
-global.location = "Pakistan, Lahore, Sabzazar" //ur location
-
-//new
-global.botname = 'XLICON-V4-MD' //ur bot name
-global.ownernumber = ['923184070915'] //ur owner number, dont add more than one
-global.ownername = '𝙎𝙖𝙡𝙢𝙖𝙣 𝘼𝙝𝙢𝙖𝙙' //ur owner name
-global.websitex = "https://youtube.com/@s4salmanyt"
-global.wagc = "https://whatsapp.com/channel/0029VaINgEZK0IBaK1nDtE3f"
-global.themeemoji = '⛩'
-global.wm = "Xlicon Bot Inc."
-global.botscript = 'https://github.com/salmanytofficial/XLICON-V4-MD' //script link
-global.packname = "𝘼𝙃𝙃𝙈𝙄 𝙆𝙐𝙉"
-global.author = "MΛDΣ BY 𝙎𝘼𝙇𝙈𝘼𝙉 𝘼𝙃𝙈𝘼𝘿"
-global.creator = "923184070915@s.whatsapp.net"
-global.xprefix = '.'
-global.premium = ["923184070915"] // Premium User
-
-//bot sett
-global.typemenu = 'v2' // menu type 'v1' => 'v12'
-global.typereply = 'v4' // reply type 'v1' => 'v4'
-global.autoblocknumber = '212' //set autoblock country code
-global.antiforeignnumber = '91' //set anti foreign number country code
-global.antidelete = false //set anti delete 
-
-
-global.listv = ['•','●','■','✿','▲','➩','➢','➣','➤','✦','✧','△','❀','○','□','♤','♡','◇','♧','々','〆']
-global.tempatDB = 'database.json'
-
-
-
-global.limit = {
-	free: 100,
-	premium: 999,
-	vip: 'VIP'
-}
-
-global.uang = {
-	free: 10000,
-	premium: 1000000,
-	vip: 10000000
-}
-
-global.mess = {
-	error: 'Error!',
-	nsfw: 'Nsfw is disabled in this group, Please tell the admin to enable',
-	done: 'Done'
-}
-
-global.bot = {
-	limit: 0,
-	uang: 0
-}
-
-global.game = {
-	suit: {},
-	menfes: {},
-	tictactoe: {},
-	kuismath: {},
-	tebakbom: {},
-}
-
-//~~~~~~~~~~~~~~~< PROCESS >~~~~~~~~~~~~~~~\\
+//~~~~~~~~~~~~~~~< SETTINGS >~~~~~~~~~~~~~~~\\
 
 let file = require.resolve(__filename)
 fs.watchFile(file, () => {
@@ -110,4 +43,115 @@ fs.watchFile(file, () => {
 	console.log(chalk.redBright(`Updated ${__filename}`))
 	delete require.cache[file]
 	require(file)
+});
+
+
+const fs = require('fs');
+const chalk = require('chalk');
+
+
+//~~~~~~~~< Owner Information>~~~~~~~~~~~~~~\\
+global.ytname = process.env.YT_NAME || "YT: S4 SALMAN YT";
+
+global.socialm = process.env.GITHUB_USERNAME || "GitHub: salmanytofficial";
+
+global.location = process.env.LOCATION || "Pakistan, Lahore, Sabzazar";
+
+
+//~~~~~~~~<Session and Bot Details>~~~~~~~~~~~~~\\
+global.SESSION_ID = process.env.SESSION_ID || '';
+
+global.botname = process.env.BOT_NAME || 'XLICON-V4-MD';
+
+global.ownernumber = [process.env.OWNER_NUMBER || '923184070915'];
+
+global.ownername = process.env.OWNER_NAME || '𝙎𝙖𝙡𝙢𝙖𝙣 𝘼𝙝𝙢𝙖𝙙';
+
+
+//~~~~~~<Website and Social Links>~~~~~~~~~~\\
+global.websitex = process.env.WEBSITE_URL || "https://youtube.com/@s4salmanyt";
+
+global.wagc = process.env.WHATSAPP_CHANNEL || "https://whatsapp.com/channel/0029VaINgEZK0IBaK1nDtE3f";
+
+
+//~~~~~~~~<Theme and Miscellaneous>~~~~~~~~~~\\
+global.themeemoji = process.env.THEME_EMOJI || '⛩';
+
+global.wm = process.env.WATERMARK || "Xlicon Bot Inc.";
+
+global.botscript = process.env.SCRIPT_LINK || 'https://github.com/salmanytofficial/XLICON-V4-MD';
+
+global.packname = process.env.PACK_NAME || "𝘼𝙃𝙃𝙈𝙄 𝙆𝙐𝙉";
+
+global.author = process.env.AUTHOR_NAME || "MΛDΣ BY 𝙎𝘼𝙇𝙈𝘼𝙉 𝘼𝙃𝙈𝘼𝘿";
+
+global.creator = process.env.CREATOR_NUMBER || "923184070915@s.whatsapp.net";
+
+
+//~~~~~~~~~~~~~<Bot Settings>~~~~~~~~~~~~~~~\\
+global.xprefix = process.env.PREFIX || '.';
+
+global.premium = [process.env.PREMIUM_NUMBER || '923184070915'];
+
+global.typemenu = process.env.MENU_TYPE || 'v2';
+
+global.typereply = process.env.REPLY_TYPE || 'v4';
+
+global.autoblocknumber = process.env.AUTOBLOCK_COUNTRYCODE || '212';
+
+global.antiforeignnumber = process.env.ANTIFOREIGN_COUNTRYCODE || '91';
+
+global.antidelete = process.env.ANTI_DELETE === 'true';
+
+
+global.listv = ['•','●','■','✿','▲','➩','➢','➣','➤','✦','✧','△','❀','○','□','♤','♡','◇','♧','々','〆'];
+
+
+global.tempatDB = process.env.DB_FILE || 'database.json';
+
+
+global.limit = {
+  free: parseInt(process.env.FREE_LIMIT || 100),
+  premium: parseInt(process.env.PREMIUM_LIMIT || 999),
+  vip: process.env.VIP_LIMIT || 'VIP'
+};
+
+
+global.uang = {
+  free: parseInt(process.env.FREE_UANG || 10000),
+  premium: parseInt(process.env.PREMIUM_UANG || 1000000),
+  vip: parseInt(process.env.VIP_UANG || 10000000)
+};
+
+
+global.mess = {
+  error: process.env.ERROR_MESSAGE || 'Error!',
+  nsfw: process.env.NSFW_MESSAGE || 'Nsfw is disabled in this group, Please tell the admin to enable',
+  done: process.env.DONE_MESSAGE || 'Done'
+};
+
+
+global.bot = {
+  limit: 0,
+  uang: 0
+};
+
+
+global.game = {
+  suit: {},
+  menfes: {},
+  tictactoe: {},
+  kuismath: {},
+  tebakbom: {},
+};
+
+
+//~~~~~~~~~~~~~~~< PROCESS >~~~~~~~~~~~~~~~\\
+// Watch for file changes
+let file = require.resolve(__filename);
+fs.watchFile(file, () => {
+  fs.unwatchFile(file);
+  console.log(chalk.redBright(`Updated ${__filename}`));
+  delete require.cache[file];
+  require(file);
 });

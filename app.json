@@ -6,6 +6,11 @@
   "logo": "https://node-js-sample.herokuapp.com/node.png",
   "keywords": ["multi-device"],
   "stack": "container",
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "Standard-2X"
+    }
   "env": {
     "SESSION_ID": {
       "description": "Enter session id here; must start with XLICON-V4~",

@@ -62,11 +62,6 @@
       "description": "Auto-Block Country Code",
        "required": false
     },
-    "ANTI_DELETE": {
-      "value": "false",
-      "description": "Anti-Delete (true to enable/false to disable)",
-       "required": false
-    },
     "ANTIFOREIGN_COUNTRYCODE": {
       "value": "91",
       "description": "Anti-Foreign Number Country Code",

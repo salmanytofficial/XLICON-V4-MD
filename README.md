@@ -234,8 +234,15 @@ NOW Deploy👇
 <br>
 `Maintainence , Plugins Editor`
 
-<a><img src='https://i.imgur.com/LyHic3i.gif'/></a><a><img src='https://i.imgur.com/LyHic3i.gif'/></a>
   
+## 🤴 `Contributer` 
+<a href="https://github.com/Dark-Xploit/"><img src="https://i.ibb.co/YWx0tVT/b0b2980e-bd92-4f98-bd09-4244c064bc6b.jpg" alt="Tylor" border="0"></a>
+
+**XLICON-V4** - By `Tylor`
+<br>
+`Maintainence , Testings`
+
+<a><img src='https://i.imgur.com/LyHic3i.gif'/></a><a><img src='https://i.imgur.com/LyHic3i.gif'/></a> 
 
 ## 🌈 `Support Us`
 - **Mail Us:** [salmansheikh2500@gmail.com](mailto:salmansheikh2500@gmail.com)

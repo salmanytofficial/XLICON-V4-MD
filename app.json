@@ -4,7 +4,7 @@
   "description": "WhatsApp Bot Using Lib Baileys",
   "repository": "https://github.com/salmanytofficial/XLICON-V4-MD",
   "logo": "https://iili.io/dET3ukX.md.png",
-  "keywords": ["multi-device"],
+  "keywords": ["muti-device"],
   "stack": "container",
   "formation": {
     "worker": {

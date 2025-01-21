@@ -1,7 +1,5 @@
 # ℹ️ **This Project is open for contributions**
-`I myself no more working on this project but you developers can run it and make it more cool`
-<br>
-`Just Do Pull Request and you can even change README.md File`
+## `I myself no more working on this project but you developers can run it and make it more cool.` <br> `Just Do Pull Request and you can even change README.md File`
 
 <a><img src='https://i.imgur.com/LyHic3i.gif'/></a><a><img src='https://i.imgur.com/LyHic3i.gif'/></a>
                                         

@@ -93,7 +93,7 @@ Click On The Link To Donate ME...
 
 2. Get SESSION_ID (SERVER 1)
     <br>
-<a href='https://xliconbotpair-433b7fa85b89.herokuapp.com/' target="_blank"><img alt='SESSION ID' src='https://img.shields.io/badge/Session_id-100000?style=for-the-badge&logo=scan&logoColor=white&labelColor=black&color=black'/></a>
+<a href='https://xlicon-v4-3728d17afb96.herokuapp.com/' target="_blank"><img alt='SESSION ID' src='https://img.shields.io/badge/Session_id-100000?style=for-the-badge&logo=scan&logoColor=white&labelColor=black&color=black'/></a>
 
 2. Get CREDS.JSON (SERVER 2)
     <br>

@@ -79,7 +79,7 @@ global.creator = process.env.CREATOR_NUMBER || "923184070915@s.whatsapp.net";
 
 
 //~~~~~~~~~~~~~<Bot Settings>~~~~~~~~~~~~~~~\\
-global.xprefix = process.env.PREFIX || '.';
+global.xprefix = process.env.XPREFIX || '.';
 
 global.premium = [process.env.PREMIUM_NUMBER || '923184070915'];
 

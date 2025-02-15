@@ -42,7 +42,7 @@
       "description": "Sticker Author Name",
        "required": false
     },
-    "PREFIX": {
+    "XPREFIX": {
       "value": ".",
       "description": "Bot Prefix",
        "required": true

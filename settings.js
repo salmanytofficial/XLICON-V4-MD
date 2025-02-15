@@ -91,7 +91,7 @@ global.autoblocknumber = process.env.AUTOBLOCK_COUNTRYCODE || '212';
 
 global.antiforeignnumber = process.env.ANTIFOREIGN_COUNTRYCODE || '91';
 
-global.antidelete = process.env.ANTI_DELETE === 'true';
+global.antidelete = process.env.ANTI_DELETE || 'true';
 
 
 global.listv = ['•','●','■','✿','▲','➩','➢','➣','➤','✦','✧','△','❀','○','□','♤','♡','◇','♧','々','〆'];

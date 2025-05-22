@@ -12,7 +12,8 @@ const { exec } = require('child_process');
 const { Boom } = require('@hapi/boom');
 const NodeCache = require('node-cache');
 const PhoneNumber = require('awesome-phonenumber');
-const { default: makeWASocket, useMultiFileAuthState, Browsers, DisconnectReason, makeInMemoryStore, makeCacheableSignalKeyStore, proto, getAggregateVotesInPollMessage } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState, Browsers, DisconnectReason, makeCacheableSignalKeyStore, proto, getAggregateVotesInPollMessage } = require('@whiskeysockets/baileys');
+const { makeInMemoryStore } = require('@rodrigogs/baileys-store')
 
 let phoneNumber = "923184070915";
 const pairingCode = !!phoneNumber || process.argv.includes("--pairing-code");

@@ -31,7 +31,7 @@
 //want more free bot scripts? subscribe to my youtube channel: https://youtube.com/@DGXeon
 //   * Created By Github: DGXeon.
 //   * Credit To Xeon
-//   * © 2024 XLICON-V3-MD.
+//   * © 2025 XLICON-V4-MD.
 // ⛥┌┤
 // */
 
@@ -137,7 +137,6 @@ global.game = {
 
 
 //~~~~~~~~~~~~~~~< PROCESS >~~~~~~~~~~~~~~~\\
-// Watch for file changes
 let file = require.resolve(__filename);
 fs.watchFile(file, () => {
   fs.unwatchFile(file);

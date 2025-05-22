@@ -232,7 +232,7 @@ NOW Deploy👇
 
   
 ## 🤴 `Contributer` 
-<a href="https://github.com/Dark-Xploit/"><img src="https://i.ibb.co/YWx0tVT/b0b2980e-bd92-4f98-bd09-4244c064bc6b.jpg" width="250" height="250" alt="Tylor" border="0"></a>
+<a href="https://github.com/Dark-Xploit/"><img src="https://github.com/Dark-Xploit.png" width="250" height="250" alt="Tylor" border="0"></a>
 
 **XLICON-V4** - By `Tylor`
 <br>

@@ -54,7 +54,6 @@ const fse = require('fs-extra');
 const axios = require('axios');
 const chalk = require('chalk');
 const yts = require('yt-search');
-const ytdl = require('@distube/ytdl-core');
 const cron = require('node-cron');
 const cheerio = require('cheerio');
 const request = require('request');
